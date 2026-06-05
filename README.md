@@ -1,215 +1,101 @@
 # InternOps – Workforce Management & Intern Operations Platform
 
-**InternOps** is an enterprise‑grade workforce management system purpose‑built for the **Uptoskills** ecosystem.  
-It delivers hierarchical role management, attendance tracking, performance ratings, social task assignments,  
-and a complete, tamper‑proof audit trail. Every operation is guarded by strict role‑based access control and  
-per‑request ownership validation.
-
----
+**InternOps** is an enterprise-grade workforce management system designed for the Uptoskills ecosystem. It provides hierarchical role management, attendance tracking, performance ratings, social task assignments, and comprehensive audit logging. The platform enforces strict role-based access control and ownership validation across every operation.
 
 ## Table of Contents
 
-- [1. System Overview](#1-system-overview)
-- [2. Architecture](#2-architecture)
-- [3. Technology Stack](#3-technology-stack)
-- [4. Project Structure](#4-project-structure)
-- [5. Quick Start](#5-quick-start)
-- [6. Environment Variables](#6-environment-variables)
-- [7. API Documentation](#7-api-documentation)
-- [8. Database Schema](#8-database-schema)
-- [9. Security](#9-security)
-- [10. Uptoskills Integration](#10-uptoskills-integration)
-- [11. Testing](#11-testing)
-- [12. Deployment](#12-deployment)
-- [13. License](#13-license)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [API Documentation](#api-documentation)
+- [Database Schema](#database-schema)
+- [Security](#security)
+- [Uptoskills Integration](#uptoskills-integration)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [License](#license)
 
----
+## Features
 
-## 1. System Overview
+- **Role Hierarchy** – Strict five-tier structure: Admin, Senior TL, TL, Captain, Intern. Every role has bounded visibility into subordinate data.
+- **Authentication & Authorization** – JWT-based access and refresh tokens with rotation, Argon2 password hashing, brute-force protection, and per-request RBAC + ownership validation.
+- **Attendance Management** – Single and bulk attendance marking with remarks. Monthly statistics and immutable audit trails.
+- **Performance Ratings** – Role-gated rating system (Captain rates Intern, TL rates Captain, etc.). Full rating history is preserved without overwrites.
+- **Social Tasks** – Admins and Senior TLs create platform-specific tasks with deadlines. Interns upload proof screenshots; Captains/TLs verify submissions. Images are automatically purged after 24 hours.
+- **Notifications** – In-app notifications for attendance, ratings, and task events with read/unread tracking.
+- **Meetings** – Hierarchical meeting scheduling with attendee management.
+- **Reports & Exports** – Attendance summaries, rating summaries, task completion statistics, and CSV export capabilities.
+- **Audit Logging** – Every sensitive action (login, attendance change, rating creation, role modification, etc.) is permanently logged with actor, action, target, and timestamp.
+- **Session Management** – Users can view and revoke active sessions; admins can revoke any user's sessions.
+- **Uptoskills Integration Ready** – Dedicated module with service placeholders for future API synchronization.
+- **Swagger Documentation** – Interactive OpenAPI 3.0 documentation available at /docs.
 
-InternOps manages the complete lifecycle of an intern workforce, from onboarding to daily attendance,  
-performance reviews, and task assignments. The platform enforces a strict five‑level role hierarchy  
-(Admin → Senior TL → TL → Captain → Intern) and ensures that no user can access data outside their  
-chain of command.
+## Architecture
 
-### Core Capabilities
+The platform follows a layered architecture:
 
-| Module            | Description                                                                 |
-|-------------------|-----------------------------------------------------------------------------|
-| Authentication    | JWT access & refresh tokens, Argon2 hashing, brute‑force protection        |
-| User Management   | Role‑based registration, suspension, activation, soft‑delete                |
-| Hierarchy         | Recursive team views, direct reports, upward chain queries                 |
-| Attendance        | Single and bulk marking, monthly stats, immutable audit logs               |
-| Ratings           | Permanent rating history, role‑gated scoring (Captain→Intern, TL→Captain…) |
-| Social Tasks      | Task creation with deadlines, screenshot proof uploads, verification       |
-| Notifications     | In‑app alerts for attendance, ratings, and task events                     |
-| Meetings          | Schedule team meetings with hierarchical attendee management               |
-| Reports & Exports | Attendance / rating summaries, CSV export for offline analysis             |
-| Audit Logs        | Complete, immutable log of every sensitive action (actor, target, before/after) |
-| Sessions          | View and revoke active sessions; admins can revoke any user's sessions     |
-| Uptoskills Ready  | Placeholder services for future synchronisation with the Uptoskills API     |
+- **Web Server Layer** – Fastify with plugins for CORS, Helmet, rate limiting, multipart uploads, and static file serving.
+- **Middleware Layer** – Authentication, role-based access control, ownership validation, CSRF protection, input sanitization.
+- **Route Layer** – Modular Fastify route plugins for each feature domain.
+- **Service Layer** – Business logic for authentication, password reset, hierarchy management, and Uptoskills integration.
+- **Repository Layer** – Raw SQL queries via the pg driver; no ORM is used.
+- **Database Layer** – PostgreSQL with UUID primary keys, foreign keys, indexes, and soft-delete support.
 
----
+## Technology Stack
 
-## 2. Architecture
+| Layer     | Technology                          |
+|-----------|-------------------------------------|
+| Backend   | Node.js, Fastify 4, JavaScript (CommonJS) |
+| Frontend  | React, Vite, TailwindCSS, Axios, TanStack Query, Zustand |
+| Database  | PostgreSQL (Neon serverless)        |
+| Auth      | JWT, Argon2, refresh token rotation |
+| Caching   | Redis (Upstash) – optional          |
+| Docs      | Swagger (OpenAPI 3.0) via @fastify/swagger |
+| Security  | Helmet, CORS, Rate Limiting, CSRF, Input Sanitization, Brute-Force Protection |
+| DevOps    | Git, GitHub, PowerShell scripting   |
 
-InternOps follows a clean **layered architecture**, separating concerns into distinct, replaceable layers.
-
-### 2.1 Block Diagram
-
-\\\
-┌──────────────────────────────────────────────────────────┐
-│                      CLIENT LAYER                         │
-│  ┌─────────────────────┐   ┌──────────────────────────┐  │
-│  │   React SPA         │   │  External API Consumers  │  │
-│  │  (Vite + Tailwind)  │   │  (Uptoskills, Mobile…)   │  │
-│  └─────────┬───────────┘   └────────────┬─────────────┘  │
-└────────────┼────────────────────────────┼────────────────┘
-             │                            │
-             ▼                            ▼
-┌──────────────────────────────────────────────────────────┐
-│                     API GATEWAY LAYER                     │
-│  ┌────────────────────────────────────────────────────┐  │
-│  │              Fastify HTTP Server                    │  │
-│  │  ┌──────────────────────────────────────────────┐  │  │
-│  │  │          Security Middleware Pipeline         │  │  │
-│  │  │  Helmet → CORS → Rate Limiter → CSRF →        │  │  │
-│  │  │  Auth → RBAC → Ownership → Sanitisation       │  │  │
-│  │  └──────────────────────────────────────────────┘  │  │
-│  └────────────────────────────────────────────────────┘  │
-└────────────────────────┬─────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────┐
-│                      SERVICE LAYER                        │
-│  ┌───────────┐  ┌───────────┐  ┌──────────────────────┐  │
-│  │ Auth      │  │ Hierarchy │  │ Notification Engine  │  │
-│  │ (JWT,     │  │ Service   │  │ (in‑app alerts)     │  │
-│  │  refresh) │  │           │  │                     │  │
-│  └───────────┘  └───────────┘  └──────────────────────┘  │
-│  ┌───────────┐  ┌───────────┐  ┌──────────────────────┐  │
-│  │ Attendance│  │ Ratings   │  │ Uptoskills           │  │
-│  │ Service   │  │ Service   │  │ Integration Layer    │  │
-│  └───────────┘  └───────────┘  └──────────────────────┘  │
-└────────────────────────┬─────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────┐
-│                    DATA ACCESS LAYER                      │
-│  ┌────────────────────────────────────────────────────┐  │
-│  │       Repository Modules (raw SQL, no ORM)         │  │
-│  └────────────────────────────────────────────────────┘  │
-└────────────────────────┬─────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────┐
-│                    PERSISTENCE LAYER                       │
-│  ┌─────────────────────┐  ┌────────────────────────────┐ │
-│  │   PostgreSQL        │  │   Redis (Upstash)          │ │
-│  │  (Neon Serverless)  │  │  (optional, for sessions)  │ │
-│  └─────────────────────┘  └────────────────────────────┘ │
-└──────────────────────────────────────────────────────────┘
-\\\
-
-### 2.2 Request Lifecycle
-
-1. **Client** sends an HTTP request (REST API or browser SPA).
-2. **Fastify** receives the request and passes it through the **middleware pipeline**.
-3. **Auth middleware** verifies the JWT and attaches the user object to the request.
-4. **RBAC & Ownership middleware** validate that the user’s role and hierarchical position permit the action.
-5. **Sanitisation middleware** strips potentially dangerous characters from the request body/query/params.
-6. The appropriate **route handler** is invoked.
-7. The handler calls the **service layer**, which orchestrates business logic.
-8. The service layer uses **repository functions** to execute raw SQL against PostgreSQL.
-9. The response flows back through the same pipeline and is sent to the client.
-10. For sensitive actions, an **audit log** entry is written asynchronously.
-
----
-
-## 3. Technology Stack
-
-| Layer       | Technology                                       |
-|-------------|--------------------------------------------------|
-| **Backend** | Node.js, Fastify v4, JavaScript (CommonJS)       |
-| **Frontend**| React 18, Vite, TailwindCSS, Axios, TanStack Query, Zustand |
-| **Database**| PostgreSQL (Neon serverless), raw SQL via \pg\ driver |
-| **Cache**   | Redis (Upstash) – optional, used for refresh token storage |
-| **Auth**    | JWT with access/refresh token rotation, Argon2 hashing |
-| **Docs**    | Swagger UI (OpenAPI 3.0) via \@fastify/swagger\ |
-| **Security**| Helmet, CORS, Rate Limiting, CSRF tokens, input sanitisation, brute‑force lockout |
-| **DevOps**  | Git, GitHub, PowerShell scripting                |
-
----
-
-## 4. Project Structure
+## Project Structure
 
 \\\
 InternOps/
 ├── backend/
 │   ├── src/
-│   │   ├── config/              # DB pool, Redis client, environment configuration
-│   │   ├── middleware/           # auth, rbac, ownership, csrf, bruteForce, sanitize, directManager
-│   │   ├── modules/              # Feature modules (see list below)
-│   │   ├── utils/                # Token helpers, hierarchy queries, audit logger, cron jobs
-│   │   ├── services/             # Email service placeholder
-│   │   └── app.js                # Fastify entry point (server startup)
-│   ├── migrations/               # Ordered SQL migration files
-│   ├── seeds/                    # Database seed scripts (default admin)
+│   │   ├── config/          # Database pool, Redis client, environment configuration
+│   │   ├── middleware/       # auth, rbac, ownership, csrf, bruteForce, sanitize, directManager
+│   │   ├── modules/          # Feature modules (auth, users, departments, hierarchy, attendance, ratings, social-tasks, proof-submissions, notifications, audit, uploads, analytics, meetings, sessions, reports, uptoskills)
+│   │   ├── utils/            # Token generation, hierarchy helpers, audit logging, cron jobs
+│   │   ├── services/         # Email service placeholder
+│   │   └── app.js            # Fastify entry point
+│   ├── migrations/           # SQL migration files
+│   ├── seeds/                # Seed scripts (admin user)
 │   └── package.json
-├── frontend/                     # React SPA (can be started independently)
-│   ├── src/
-│   │   ├── components/           # Reusable UI components (forms, tables, charts)
-│   │   ├── pages/                # Page components (Dashboard, Attendance, etc.)
-│   │   ├── store/                # Zustand stores (auth, notifications)
-│   │   ├── lib/                  # Axios instance, utility functions
-│   │   └── main.jsx              # Vite entry point
-│   ├── public/
-│   ├── tailwind.config.js
-│   ├── vite.config.js
-│   └── package.json
-├── docs/                         # Additional documentation assets
-├── scripts/                      # PowerShell automation scripts
+├── frontend/                 # React + Vite application (independent)
+├── docs/                     # Project documentation
+├── scripts/                  # Utility PowerShell scripts
 └── README.md
 \\\
 
-### Backend Modules
-
-| Directory                    | Purpose                                               |
-|------------------------------|-------------------------------------------------------|
-| modules/auth                 | Login, register, refresh, logout, password reset      |
-| modules/users                | User CRUD, profile update, password change            |
-| modules/departments          | Department creation and listing                       |
-| modules/hierarchy            | Direct reports, team tree, upward chain               |
-| modules/attendance           | Mark attendance (single & bulk), view records, stats  |
-| modules/ratings              | Submit and view ratings (historical)                  |
-| modules/social-tasks         | Task creation, listing, filtering                     |
-| modules/proof-submissions    | Upload proof, verify submission, view proofs          |
-| modules/notifications        | List, mark read, delete notifications                 |
-| modules/audit                | View audit logs (admin only)                          |
-| modules/uploads              | Avatar upload with file type validation               |
-| modules/analytics            | Overview stats, top performers, attendance trends     |
-| modules/meetings             | CRUD meetings, manage attendees                       |
-| modules/sessions             | List and revoke user sessions; admin revoke any user  |
-| modules/reports              | Attendance summary, ratings summary, task completion  |
-| modules/reports/export       | CSV export endpoints for reports                      |
-| modules/uptoskills           | Placeholder services for Uptoskills API sync          |
-
----
-
-## 5. Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js** 18+ and **npm**
-- **PostgreSQL** 15+ (or a Neon connection string)
-- **Git**
+- Node.js 18+ and npm
+- PostgreSQL 15+ (or a Neon database connection string)
+- Git
 
-### 5.1 Clone & Install
+### 1. Clone the Repository
 
 \\\ash
 git clone https://github.com/rajat-wyrm/InternOps.git
 cd InternOps
+\\\
 
+### 2. Install Dependencies
+
+\\\ash
 # Backend
 cd backend
 npm install
@@ -221,17 +107,17 @@ npm install
 cd ..
 \\\
 
-### 5.2 Configure Environment
+### 3. Configure Environment Variables
 
-Copy the example environment file and edit it:
+Copy the example environment file and fill in your values:
 
 \\\ash
 cp backend/.env.example backend/.env
 \\\
 
-Set the required variables (see [Environment Variables](#6-environment-variables)).
+Edit ackend/.env and set the required variables (see [Environment Variables](#environment-variables)).
 
-### 5.3 Database Migrations & Seed
+### 4. Run Database Migrations and Seed
 
 \\\ash
 cd backend
@@ -239,294 +125,202 @@ npm run migrate
 npm run seed
 \\\
 
-Default admin account:
-- **Email:** admin@internops.com
-- **Password:** Admin@123
+The seed script creates a default administrator account:
+- Email: dmin@internops.com
+- Password: Admin@123
 
-### 5.4 Start the Server
+### 5. Start the Backend Server
 
 \\\ash
-# Backend
-cd backend
-npm run dev        # or: node src/app.js
+npm run dev
 \\\
 
-The API is available at **http://localhost:5000**.  
-Swagger UI is at **http://localhost:5000/docs**.
+The API server will start on http://localhost:5000. Swagger UI is available at http://localhost:5000/docs.
 
-### 5.5 Start the Frontend (Optional)
+### 6. Start the Frontend (Optional)
 
 \\\ash
 cd frontend
 npm run dev
 \\\
 
-Frontend runs at **http://localhost:5173** and proxies API requests to the backend.
+The frontend runs on http://localhost:5173 and proxies API requests to the backend.
 
----
+## Environment Variables
 
-## 6. Environment Variables
+The following variables are defined in ackend/.env:
 
-All variables are defined in \ackend/.env\. The table below lists every variable, its purpose, and whether it is required.
+| Variable               | Description                                      | Required |
+|------------------------|--------------------------------------------------|----------|
+| PORT                 | Server port (default: 5000)                      | No       |
+| DATABASE_URL         | PostgreSQL connection string                     | Yes      |
+| JWT_SECRET           | Secret key for JWT signing                       | Yes      |
+| JWT_EXPIRES_IN       | Token expiration duration (e.g., 7d)           | No       |
+| API_KEY              | Internal API key for service-to-service calls    | No       |
+| CORS_ORIGIN          | Allowed CORS origin (default: localhost:5173)    | No       |
+| UPSTASH_REDIS_REST_URL| Redis connection URL (optional)                 | No       |
+| UPSTASH_REDIS_REST_TOKEN| Redis authentication token (optional)        | No       |
+| GOOGLE_CLIENT_ID     | Google OAuth client ID (future use)              | No       |
+| GOOGLE_CLIENT_SECRET | Google OAuth client secret (future use)          | No       |
+| FAST2SMS_API_KEY     | Fast2SMS API key (future use)                    | No       |
+| GROQ_API_KEY         | Groq AI API key (future use)                     | No       |
+| OPENAI_API_KEY       | OpenAI API key (future use)                      | No       |
+| GEMINI_API_KEY       | Google Gemini API key (future use)               | No       |
+| DEEPSEEK_API_KEY     | DeepSeek API key (future use)                    | No       |
+| HUGGINGFACE_TOKEN    | Hugging Face API token (future use)              | No       |
+| EMAIL_API_KEY        | Email service API key (future use)               | No       |
+| EMAIL_FROM           | Sender address for emails (future use)           | No       |
+| UPTOSKILLS_BASE_URL  | Base URL for Uptoskills API (future use)         | No       |
+| UPTOSKILLS_API_KEY   | API key for Uptoskills integration (future use)  | No       |
 
-| Variable                   | Description                                                   | Required | Default                |
-|----------------------------|---------------------------------------------------------------|----------|------------------------|
-| PORT                       | HTTP port for the Fastify server                              | No       | 5000                   |
-| HOST                       | Bind address (0.0.0.0 for all interfaces)                     | No       | 0.0.0.0                |
-| NODE_ENV                   | Environment (\development\, \production\)                     | No       | development            |
-| DATABASE_URL               | PostgreSQL connection string (Neon)                           | **Yes**  | –                      |
-| JWT_SECRET                 | Secret key for signing JWT tokens                             | **Yes**  | –                      |
-| JWT_EXPIRES_IN             | Token expiry duration (\7d\)                                  | No       | 7d                     |
-| API_KEY                    | Internal service‑to‑service authentication key                | No       | –                      |
-| CORS_ORIGIN                | Allowed origin for CORS (production frontend URL)             | No       | http://localhost:5173  |
-| UPSTASH_REDIS_REST_URL     | Upstash Redis REST URL (for refresh token storage)            | No       | –                      |
-| UPSTASH_REDIS_REST_TOKEN   | Upstash Redis authentication token                            | No       | –                      |
-| GOOGLE_CLIENT_ID           | Google OAuth client ID (future use)                           | No       | –                      |
-| GOOGLE_CLIENT_SECRET       | Google OAuth client secret (future use)                       | No       | –                      |
-| FAST2SMS_API_KEY           | Fast2SMS API key (future use)                                 | No       | –                      |
-| GROQ_API_KEY               | Groq AI API key (future use)                                  | No       | –                      |
-| OPENAI_API_KEY             | OpenAI API key (future use)                                   | No       | –                      |
-| GEMINI_API_KEY             | Google Gemini API key (future use)                            | No       | –                      |
-| DEEPSEEK_API_KEY           | DeepSeek API key (future use)                                 | No       | –                      |
-| DEEPSEEK_BASE_URL          | DeepSeek base URL (future use)                                | No       | https://api.deepseek.com |
-| HUGGINGFACE_TOKEN          | Hugging Face API token (future use)                           | No       | –                      |
-| EMAIL_API_KEY              | Email service API key (future use)                            | No       | –                      |
-| EMAIL_FROM                 | Sender address for emails (future use)                        | No       | noreply@internops.com  |
-| UPTOSKILLS_BASE_URL        | Base URL for Uptoskills API (future use)                      | No       | –                      |
-| UPTOSKILLS_API_KEY         | API key for Uptoskills integration (future use)               | No       | –                      |
+## API Documentation
 
----
+Full interactive API documentation is available via Swagger UI at /docs when the server is running.
 
-## 7. API Documentation
+### Core Endpoints
 
-Interactive Swagger UI is available at **/docs** when the server is running.  
-The following table lists every API endpoint, its HTTP method, required roles, and a brief description.
+| Method | Endpoint                              | Description                       | Roles                       |
+|--------|---------------------------------------|-----------------------------------|-----------------------------|
+| POST   | /api/auth/login                       | User login                        | Public                      |
+| POST   | /api/auth/register                    | Register a new user (Admin only)  | Admin                       |
+| POST   | /api/auth/refresh                     | Refresh access token              | Public                      |
+| POST   | /api/auth/logout                      | Logout and revoke refresh token   | Authenticated               |
+| POST   | /api/auth/forgot-password             | Request password reset            | Public                      |
+| POST   | /api/auth/reset-password              | Reset password with token         | Public                      |
+| GET    | /api/auth/csrf-token                  | Get CSRF token                    | Public                      |
+| GET    | /api/users                            | List users (paginated)            | Admin                       |
+| GET    | /api/users/me                         | Get current user profile          | Authenticated               |
+| PATCH  | /api/users/me                         | Update own profile                | Authenticated               |
+| PATCH  | /api/users/me/password                | Change own password               | Authenticated               |
+| GET    | /api/users/:id                        | Get user by ID (ownership check)  | Hierarchy-based             |
+| PATCH  | /api/users/:id/suspend                | Suspend a user                    | Admin                       |
+| PATCH  | /api/users/:id/activate               | Activate a user                   | Admin                       |
+| DELETE | /api/users/:id                        | Soft-delete a user                | Admin                       |
+| POST   | /api/departments                      | Create a department               | Admin                       |
+| GET    | /api/departments                      | List all departments              | Admin, Senior TL            |
+| GET    | /api/hierarchy/my/direct-reports      | List direct reports               | Authenticated               |
+| GET    | /api/hierarchy/my/team                | List entire team                  | Authenticated               |
+| GET    | /api/hierarchy/my/chain               | List upward management chain      | Authenticated               |
+| POST   | /api/attendance/mark                  | Mark single attendance            | Manager of target user      |
+| POST   | /api/attendance/bulk                  | Bulk mark attendance              | Manager of target users     |
+| GET    | /api/attendance/:userId               | View attendance records           | Hierarchy-based             |
+| GET    | /api/attendance/:userId/stats         | Monthly attendance stats          | Hierarchy-based             |
+| POST   | /api/ratings                          | Submit a rating                   | Manager of target user      |
+| GET    | /api/ratings/:userId                  | View ratings for a user           | Hierarchy-based             |
+| POST   | /api/tasks                            | Create a social task              | Admin, Senior TL            |
+| GET    | /api/tasks                            | List all tasks                    | Authenticated               |
+| POST   | /api/proofs/submit                    | Submit proof (multipart upload)   | Intern                      |
+| PATCH  | /api/proofs/:id/verify                | Verify a proof submission         | Captain, TL, Senior TL      |
+| GET    | /api/proofs/task/:taskId              | View proofs for a task            | Captain, TL, Senior TL, Admin |
+| GET    | /api/proofs/my                        | View own proofs                   | Authenticated               |
+| GET    | /api/notifications                    | List notifications                | Authenticated               |
+| GET    | /api/notifications/unread-count       | Get unread notification count     | Authenticated               |
+| POST   | /api/notifications/read-all           | Mark all notifications as read    | Authenticated               |
+| PATCH  | /api/notifications/:id/read           | Mark a single notification as read| Authenticated               |
+| DELETE | /api/notifications/:id                | Delete a notification             | Authenticated               |
+| GET    | /api/audit                            | View audit logs                   | Admin                       |
+| POST   | /api/uploads/avatar                   | Upload profile avatar             | Authenticated               |
+| GET    | /api/analytics/overview               | User role distribution            | Admin, Senior TL            |
+| GET    | /api/analytics/department-attendance  | Department attendance rate        | Admin, Senior TL            |
+| GET    | /api/analytics/top-performers         | Top rated users by role           | Admin, Senior TL, TL        |
+| GET    | /api/analytics/attendance-trends      | Attendance trends over months     | Admin, Senior TL            |
+| POST   | /api/meetings                         | Create a meeting                  | Admin, Senior TL, TL        |
+| GET    | /api/meetings                         | List meetings                     | Hierarchy-based             |
+| GET    | /api/meetings/:id                     | Get meeting details               | Hierarchy-based             |
+| PATCH  | /api/meetings/:id                     | Update meeting                    | Creator or Admin            |
+| DELETE | /api/meetings/:id                     | Soft-delete meeting               | Creator or Admin            |
+| POST   | /api/meetings/:id/attendees           | Add attendee to meeting           | Creator or Admin            |
+| DELETE | /api/meetings/:id/attendees/:userId   | Remove attendee from meeting      | Creator or Admin            |
+| GET    | /api/sessions/me                      | List own active sessions          | Authenticated               |
+| DELETE | /api/sessions/me/:sessionId           | Revoke a session                  | Authenticated               |
+| POST   | /api/sessions/me/revoke-all           | Revoke all own sessions           | Authenticated               |
+| POST   | /api/sessions/admin/revoke-user/:userId| Revoke all sessions of a user   | Admin                       |
+| GET    | /api/reports/attendance-summary       | Attendance summary by role        | Admin, Senior TL            |
+| GET    | /api/reports/ratings-summary          | Rating summary by role            | Admin, Senior TL            |
+| GET    | /api/reports/task-completion          | Task completion statistics        | Admin, Senior TL            |
+| GET    | /api/reports/export/attendance-csv    | Export attendance CSV             | Admin, Senior TL            |
+| GET    | /api/reports/export/ratings-csv       | Export ratings CSV                | Admin, Senior TL            |
+| GET    | /api/reports/export/tasks-csv         | Export tasks CSV                  | Admin, Senior TL            |
+| GET    | /api/uptoskills/sync-status           | Uptoskills sync status placeholder| Admin                       |
+| GET    | /health                               | Basic health check                | Public                      |
+| GET    | /health/db                            | Database health check             | Public                      |
+| GET    | /health/full                          | Full health (DB + Redis)          | Public                      |
 
-### 7.1 Authentication
+## Database Schema
 
-| Method | Endpoint                       | Roles          | Description                           |
-|--------|--------------------------------|----------------|---------------------------------------|
-| POST   | /api/auth/register             | Admin          | Create a new user                     |
-| POST   | /api/auth/login                | Public         | Login with email & password           |
-| POST   | /api/auth/refresh              | Public         | Refresh access token                  |
-| POST   | /api/auth/logout               | Authenticated  | Revoke refresh token                  |
-| GET    | /api/auth/csrf-token           | Public         | Get a CSRF token for state‑changing requests |
-| POST   | /api/auth/forgot-password      | Public         | Request a password reset link         |
-| POST   | /api/auth/reset-password       | Public         | Reset password with token             |
+The system uses PostgreSQL with UUID primary keys and soft-delete columns (deleted_at). Key tables include:
 
-### 7.2 Users
+- users – User accounts with role, manager hierarchy, department, and suspension status.
+- departments – Department names and creators.
+- ttendance – Immutable attendance records with status (Present/Absent/Half-day) and remarks.
+- atings – Permanent rating history with score (1-5), reviewer, and remarks.
+- social_tasks – Task definitions with deadlines and target platforms.
+- proof_submissions – Image uploads linked to tasks, with verification status.
+- 
+otifications – In-app notification messages per user.
+- udit_logs – Complete history of all sensitive actions.
+- meetings – Scheduled meetings with attendees.
+- efresh_tokens – JWT refresh token store.
+- login_attempts – Brute-force tracking table.
 
-| Method | Endpoint                       | Roles          | Description                           |
-|--------|--------------------------------|----------------|---------------------------------------|
-| GET    | /api/users                     | Admin          | List all users (paginated)            |
-| GET    | /api/users/me                  | Authenticated  | Get current user profile              |
-| PATCH  | /api/users/me                  | Authenticated  | Update own profile (full_name)        |
-| PATCH  | /api/users/me/password         | Authenticated  | Change own password                   |
-| GET    | /api/users/:id                 | Hierarchy-based| Get user by ID (ownership check)      |
-| PATCH  | /api/users/:id/suspend         | Admin          | Suspend a user account                |
-| PATCH  | /api/users/:id/activate        | Admin          | Re‑activate a suspended account       |
-| DELETE | /api/users/:id                 | Admin          | Soft‑delete a user                    |
+All tables use foreign keys and indexes for referential integrity and performance.
 
-### 7.3 Departments
+## Security
 
-| Method | Endpoint                       | Roles          | Description                           |
-|--------|--------------------------------|----------------|---------------------------------------|
-| POST   | /api/departments               | Admin          | Create a new department               |
-| GET    | /api/departments               | Admin, Senior TL | List all departments                |
+The platform implements multiple layers of security:
 
-### 7.4 Hierarchy
+- **Authentication** – JWT access tokens (15 min) and refresh tokens (7 days) with rotation. Argon2 password hashing.
+- **Authorization** – RBAC middleware checks user role; ownership middleware validates hierarchical access on every request.
+- **Brute-Force Protection** – Login attempts are tracked per email and IP; accounts are temporarily locked after 5 failures within 15 minutes.
+- **CSRF Protection** – All state-changing requests require an X-CSRF-Token header.
+- **Rate Limiting** – General rate limiting (100 requests/min) and stricter limits on authentication routes (5 requests/min).
+- **Helmet** – Sets secure HTTP headers (CSP, HSTS, XSS protection, etc.).
+- **Input Sanitization** – Strips HTML tags and quotes from incoming data to prevent XSS and SQL injection.
+- **File Upload Validation** – MIME type and extension whitelisting, unique filenames (UUID), size limits.
+- **Audit Logging** – Immutable log of every sensitive action with actor, target, old/new values, IP, and user agent.
 
-| Method | Endpoint                       | Roles          | Description                           |
-|--------|--------------------------------|----------------|---------------------------------------|
-| GET    | /api/hierarchy/my/direct-reports| Authenticated  | List direct reports                   |
-| GET    | /api/hierarchy/my/team         | Authenticated  | Recursive team tree                   |
-| GET    | /api/hierarchy/my/chain        | Authenticated  | Upward management chain               |
+## Uptoskills Integration
 
-### 7.5 Attendance
+A dedicated integration module (ackend/src/modules/uptoskills) provides placeholder service functions and an endpoint. Developers can implement the actual synchronization by filling in the following stubs:
 
-| Method | Endpoint                       | Roles          | Description                           |
-|--------|--------------------------------|----------------|---------------------------------------|
-| POST   | /api/attendance/mark           | Manager of target | Mark single attendance              |
-| POST   | /api/attendance/bulk           | Manager of targets | Bulk mark attendance               |
-| GET    | /api/attendance/:userId        | Hierarchy-based | View attendance records for a user   |
-| GET    | /api/attendance/:userId/stats  | Hierarchy-based | Monthly attendance statistics        |
+- getInternsFromUptoskills()
+- getDepartmentsFromUptoskills()
+- syncUsers()
+- syncAttendance()
+- syncProjects()
 
-### 7.6 Ratings
+All URLs and API keys are configured via environment variables (UPTOSKILLS_BASE_URL, UPTOSKILLS_API_KEY).
 
-| Method | Endpoint                       | Roles          | Description                           |
-|--------|--------------------------------|----------------|---------------------------------------|
-| POST   | /api/ratings                   | Manager of target | Submit a rating (1‑5) with remarks  |
-| GET    | /api/ratings/:userId           | Hierarchy-based | View rating history for a user       |
+## Testing
 
-### 7.7 Social Tasks & Proofs
+The backend can be tested using the comprehensive PowerShell diagnostic script located in the project root. It verifies:
 
-| Method | Endpoint                       | Roles          | Description                           |
-|--------|--------------------------------|----------------|---------------------------------------|
-| POST   | /api/tasks                     | Admin, Senior TL | Create a social task                |
-| GET    | /api/tasks                     | Authenticated  | List all tasks                        |
-| POST   | /api/proofs/submit             | Intern         | Upload a screenshot as proof          |
-| PATCH  | /api/proofs/:id/verify         | Captain, TL, Senior TL | Verify a proof submission     |
-| GET    | /api/proofs/task/:taskId       | Captain, TL, Senior TL, Admin | View proofs for a task |
-| GET    | /api/proofs/my                 | Authenticated  | View own submitted proofs             |
-
-### 7.8 Notifications
-
-| Method | Endpoint                       | Roles          | Description                           |
-|--------|--------------------------------|----------------|---------------------------------------|
-| GET    | /api/notifications             | Authenticated  | List notifications (paginated)        |
-| GET    | /api/notifications/unread-count| Authenticated  | Get unread notification count         |
-| POST   | /api/notifications/read-all    | Authenticated  | Mark all as read                      |
-| PATCH  | /api/notifications/:id/read    | Authenticated  | Mark a single notification as read    |
-| DELETE | /api/notifications/:id         | Authenticated  | Delete a notification                 |
-
-### 7.9 Analytics & Reports
-
-| Method | Endpoint                                      | Roles                | Description                        |
-|--------|-----------------------------------------------|----------------------|------------------------------------|
-| GET    | /api/analytics/overview                       | Admin, Senior TL     | User count by role                 |
-| GET    | /api/analytics/department-attendance          | Admin, Senior TL     | Department attendance breakdown    |
-| GET    | /api/analytics/top-performers                 | Admin, Senior TL, TL | Top‑rated users by role            |
-| GET    | /api/analytics/attendance-trends              | Admin, Senior TL     | Attendance trends over months      |
-| GET    | /api/reports/attendance-summary               | Admin, Senior TL     | Attendance summary by role/status  |
-| GET    | /api/reports/ratings-summary                  | Admin, Senior TL     | Rating averages by role            |
-| GET    | /api/reports/task-completion                  | Admin, Senior TL     | Task verification stats            |
-| GET    | /api/reports/export/attendance-csv            | Admin, Senior TL     | Download attendance CSV            |
-| GET    | /api/reports/export/ratings-csv               | Admin, Senior TL     | Download ratings CSV               |
-| GET    | /api/reports/export/tasks-csv                 | Admin, Senior TL     | Download task completion CSV       |
-
-### 7.10 Meetings
-
-| Method | Endpoint                                    | Roles                   | Description                      |
-|--------|---------------------------------------------|-------------------------|----------------------------------|
-| POST   | /api/meetings                               | Admin, Senior TL, TL    | Schedule a meeting               |
-| GET    | /api/meetings                               | Hierarchy‑based         | List meetings                    |
-| GET    | /api/meetings/:id                           | Hierarchy‑based         | Get meeting details              |
-| PATCH  | /api/meetings/:id                           | Creator or Admin        | Update meeting                   |
-| DELETE | /api/meetings/:id                           | Creator or Admin        | Soft‑delete meeting              |
-| POST   | /api/meetings/:id/attendees                 | Creator or Admin        | Add attendee                     |
-| DELETE | /api/meetings/:id/attendees/:userId         | Creator or Admin        | Remove attendee                  |
-
-### 7.11 Sessions
-
-| Method | Endpoint                                    | Roles          | Description                      |
-|--------|---------------------------------------------|----------------|----------------------------------|
-| GET    | /api/sessions/me                            | Authenticated  | List own active sessions         |
-| DELETE | /api/sessions/me/:sessionId                 | Authenticated  | Revoke a specific session        |
-| POST   | /api/sessions/me/revoke-all                 | Authenticated  | Revoke all other sessions        |
-| POST   | /api/sessions/admin/revoke-user/:userId     | Admin          | Revoke all sessions of a user    |
-
-### 7.12 Uptoskills
-
-| Method | Endpoint                        | Roles | Description                      |
-|--------|---------------------------------|-------|----------------------------------|
-| GET    | /api/uptoskills/sync-status     | Admin | Placeholder sync status endpoint |
-
-### 7.13 Health Checks
-
-| Method | Endpoint        | Roles  | Description                      |
-|--------|-----------------|--------|----------------------------------|
-| GET    | /health          | Public | Basic health (server alive)      |
-| GET    | /health/db       | Public | Database connectivity check      |
-| GET    | /health/full     | Public | DB + Redis full health check     |
-
----
-
-## 8. Database Schema
-
-All tables use **UUID** primary keys and include **created_at**, **updated_at**, and **deleted_at** columns  
-for soft‑delete support. Foreign keys and indexes are applied throughout.
-
-| Table              | Key Columns / Description                                                 |
-|--------------------|---------------------------------------------------------------------------|
-| users              | id, email, password_hash (Argon2), role (enum), manager_id (self‑ref FK), department_id, suspended |
-| departments        | id, name, created_by                                                      |
-| attendance         | id, user_id (FK), marked_by (FK), date, status (enum), remarks           |
-| ratings            | id, rated_user_id (FK), rated_by (FK), score (1‑5), remarks               |
-| social_tasks       | id, title, description, target_platform, task_link, deadline, created_by  |
-| proof_submissions  | id, task_id (FK), intern_id (FK), image_path, verified_by, status         |
-| notifications      | id, user_id (FK), message, read (bool)                                   |
-| audit_logs         | id, user_id, action, resource_type, resource_id, details (JSONB), old_value, new_value, ip_address, user_agent |
-| meetings           | id, title, description, meeting_date, start_time, end_time, created_by, department_id |
-| meeting_attendees  | meeting_id (FK), user_id (FK) – composite PK                              |
-| refresh_tokens     | id, user_id (FK), token_hash, expires_at, revoked                         |
-| login_attempts     | id, email, ip_address, success, attempted_at                              |
-| password_reset_tokens | id, user_id (FK), token_hash, expires_at, used                          |
-| _migrations        | name, applied_at – tracks applied migration files                        |
-
----
-
-## 9. Security
-
-The platform implements a defence‑in‑depth security model:
-
-- **Authentication** – JWT access tokens (15 min) with refresh token rotation (7 days). Argon2id password hashing with salt.
-- **Authorization** – RBAC middleware checks the user’s role. Ownership middleware recursively verifies hierarchical access.
-- **Brute‑Force Protection** – Failed login attempts are tracked per email and IP. After 5 failures in 15 minutes, the account is temporarily locked.
-- **CSRF Protection** – All state‑changing requests require an \X-CSRF-Token\ header, validated on the server.
-- **Rate Limiting** – 100 requests/min globally, 5 requests/min on \/api/auth\ routes.
-- **Helmet** – Sets secure HTTP headers (Content‑Security‑Policy, HSTS, X‑Frame‑Options, etc.).
-- **Input Sanitisation** – Strips HTML tags and quotes from request bodies, query parameters, and URL params.
-- **File Upload Validation** – Only JPEG/PNG/GIF images are accepted. Filenames are UUIDs. Files larger than 5 MB are rejected.
-- **Audit Logging** – Every sensitive action is recorded with the actor, target, old/new values, IP, and user agent. Logs are immutable.
-- **Soft Deletes** – Users and other resources are marked as deleted rather than physically removed.
-- **SQL Injection Prevention** – All queries use parameterised statements (\\\, \\\, etc.) via the \pg\ driver.
-
----
-
-## 10. Uptoskills Integration
-
-A dedicated module (\ackend/src/modules/uptoskills\) provides service stubs and a status endpoint.  
-To complete the integration, implement the following placeholder functions:
-
-- \getInternsFromUptoskills()\
-- \getDepartmentsFromUptoskills()\
-- \syncUsers()\
-- \syncAttendance()\
-- \syncProjects()\
-
-All connection details (base URL, API key) are configured via environment variables  
-(\UPTOSKILLS_BASE_URL\, \UPTOSKILLS_API_KEY\). The existing API endpoint \/api/uptoskills/sync-status\  
-returns a \
-ot_implemented\ status and can be replaced with the actual synchronisation logic.
-
----
-
-## 11. Testing
-
-A comprehensive PowerShell diagnostic script is available in the project root (\scripts/\).  
-It verifies:
-
-- Server health and HTTP connectivity
-- Authentication flow (CSRF token, login, token refresh)
-- All protected endpoints with a valid admin token
-- Database connectivity and schema integrity
-- Middleware behaviour (RBAC, ownership enforcement)
+- Server health and connectivity
+- Authentication flow (login, CSRF, token refresh)
+- All protected endpoints with valid tokens
+- Database connectivity and schema
+- Middleware behavior (RBAC, ownership)
 
 To run the test suite:
 
 \\\powershell
-# From the project root
-Set-Location C:\Users\rajat\InternOps
+# From the project root (C:\Users\rajat\InternOps)
 .\scripts\full-test.ps1
 \\\
 
-A successful run produces a pass/fail summary for every module.
+## Deployment
 
----
+### Production Considerations
 
-## 12. Deployment
+- Set NODE_ENV=production in the .env file.
+- Use a strong JWT_SECRET and rotate it periodically.
+- Configure CORS_ORIGIN to the exact production frontend URL.
+- Set up a process manager (e.g., PM2) to keep the Node.js server running.
+- Use a reverse proxy (Nginx, Traefik) for SSL termination.
+- Run migrations as part of the CI/CD pipeline.
+- Regularly backup the PostgreSQL database.
 
-### 12.1 Production Checklist
-
-- Set \NODE_ENV=production\ in \ackend/.env\.
-- Use a strong, unique \JWT_SECRET\ and rotate it regularly.
-- Restrict \CORS_ORIGIN\ to the exact production frontend URL.
-- Run the backend behind a reverse proxy (Nginx, Traefik) that terminates SSL.
-- Use a process manager (e.g., PM2) to keep the Node.js process alive.
-- Run database migrations as part of the CI/CD pipeline.
-- Schedule regular PostgreSQL backups.
-
-### 12.2 Example PM2 Configuration
+### Sample PM2 Configuration
 
 \\\ash
 npm install -g pm2
@@ -535,15 +329,11 @@ pm2 save
 pm2 startup
 \\\
 
----
+## License
 
-## 13. License
-
-This software is proprietary and developed for the **Uptoskills** ecosystem.  
-All rights reserved. Unauthorised use, distribution, or modification is prohibited.
+InternOps is proprietary software developed for the Uptoskills ecosystem. All rights reserved.
 
 ---
 
-**Maintainers:** Rajat Wyrm  
-**Repository:** [https://github.com/rajat-wyrm/InternOps](https://github.com/rajat-wyrm/InternOps)  
-**Issues:** [GitHub Issues](https://github.com/rajat-wyrm/InternOps/issues)
+**Maintainers:** Rajat 
+**Contact:** [GitHub Issues](https://github.com/rajat-wyrm/InternOps/issues)
