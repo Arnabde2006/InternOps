@@ -1,4 +1,4 @@
-﻿const pool = require('../config/db');
+const pool = require('../config/db');
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
@@ -20,15 +20,14 @@ async function recordLoginAttempt(email, ip, success) {
   );
 }
 
-// Middleware to be applied before login route
-async function bruteForceCheck(request, reply, done) {
+// Middleware to be applied before login route – async with 2 args, no done
+async function bruteForceCheck(request, reply) {
   const { email } = request.body;
-  if (!email) return done(); // skip if no email (will fail validation later)
+  if (!email) return; // skip if no email (will fail validation later)
   const locked = await isAccountLocked(email);
   if (locked) {
     return reply.status(429).send({ error: 'Account temporarily locked due to too many failed attempts. Please try again later.' });
   }
-  done();
 }
 
 module.exports = { isAccountLocked, recordLoginAttempt, bruteForceCheck };

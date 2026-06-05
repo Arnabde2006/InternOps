@@ -1,4 +1,4 @@
-﻿const service = require('./service');
+const service = require('./service');
 const { z } = require('zod');
 const rbac = require('../../middleware/rbac');
 const { bruteForceCheck } = require('../../middleware/bruteForce');
@@ -45,6 +45,12 @@ async function routes(fastify) {
     return { message: 'Logged out' };
   });
 
+  // Get CSRF token
+  fastify.get('/csrf-token', async (req, reply) => {
+    const { generateToken } = require('../../middleware/csrf');
+    return { csrfToken: generateToken() };
+  });
+
   // Forgot password
   fastify.post('/forgot-password', async (req, reply) => {
     const schema = z.object({ email: z.string().email() });
@@ -55,10 +61,7 @@ async function routes(fastify) {
 
   // Reset password
   fastify.post('/reset-password', async (req, reply) => {
-    const schema = z.object({
-      token: z.string(),
-      newPassword: z.string().min(8),
-    });
+    const schema = z.object({ token: z.string(), newPassword: z.string().min(8) });
     const { token, newPassword } = schema.parse(req.body);
     await require('./resetService').resetPassword(token, newPassword, extractRequestInfo(req));
     return { message: 'Password reset successful. Please log in with your new password.' };

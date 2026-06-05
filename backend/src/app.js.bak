@@ -18,7 +18,7 @@ app.register(require('@fastify/cors'), {
 // Helmet
 app.register(require('@fastify/helmet'));
 
-// Sanitization plugin
+// Sanitization plugin – function, not object
 app.register(async function sanitizationPlugin(instance, opts) {
   instance.addHook('onRequest', async (request) => {
     const sanitize = (obj) => {
@@ -47,9 +47,9 @@ app.register(require('@fastify/rate-limit'), {
 // Cookie
 app.register(require('@fastify/cookie'));
 
-// CSRF (hook, not a plugin)
+// CSRF – extract the function, not the object
 const { csrfProtection } = require('./middleware/csrf');
-app.addHook('onRequest', csrfProtection);
+app.register(csrfProtection);
 
 // Multipart & Static
 app.register(require('@fastify/multipart'), { limits: { fileSize: config.maxFileSize } });
@@ -59,7 +59,7 @@ app.register(require('@fastify/static'), { root: require('path').join(__dirname,
 app.register(require('@fastify/swagger'), { openapi: { info: { title: 'InternOps API', version: '1.0.0' } } });
 app.register(require('@fastify/swagger-ui'), { routePrefix: '/docs' });
 
-// Route plugins
+// All routes
 app.register(require('./modules/auth/routes'), { prefix: '/api/auth' });
 app.register(require('./modules/users/routes'), { prefix: '/api/users' });
 app.register(require('./modules/departments/routes'), { prefix: '/api/departments' });
@@ -77,20 +77,6 @@ app.register(require('./modules/sessions/routes'), { prefix: '/api/sessions' });
 app.register(require('./modules/reports/routes'), { prefix: '/api/reports' });
 app.register(require('./modules/reports/export'), { prefix: '/api/reports/export' });
 app.register(require('./modules/uptoskills/routes'), { prefix: '/api/uptoskills' });
-
-// Root redirect to docs
-
-// Fallback HTML page in case Swagger UI doesn't load
-app.get('/fallback', async (req, reply) => {
-  reply.type('text/html').send(`
-    <html><body style="font-family:sans-serif;padding:2em">
-      <h1>InternOps API is running</h1>
-      <p>Server is healthy. If you see this, the Swagger UI may not have loaded correctly.</p>
-      <a href="/docs">Try Swagger UI</a> | <a href="/health">Health check</a>
-    </body></html>
-  `);
-});
-app.get('/', async (req, reply) => reply.redirect('/docs'));
 
 // Health checks
 app.get('/health', async () => ({ status: 'ok' }));
@@ -120,7 +106,7 @@ app.setErrorHandler((error, request, reply) => {
 // Cron jobs
 require('./utils/cron').setupCronJobs();
 
-// Start
+// Start server
 const start = async () => {
   try {
     await app.listen({ port: config.port, host: config.host });
