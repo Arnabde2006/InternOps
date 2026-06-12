@@ -13,7 +13,7 @@ export default function Departments() {
     queryFn: () => api.get('/departments').then(r => r.data),
   })
 
-  const inv = () => queryClient.invalidateQueries(['departments'])
+  const inv = () => queryClient.invalidateQueries({ queryKey: ['departments'] })
   const createMut = useMutation({
     mutationFn: (n) => api.post('/departments', { name: n }),
     onSuccess: () => { setName(''); setError(''); inv() },

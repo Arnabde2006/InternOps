@@ -18,7 +18,7 @@ export default function RatingForm() {
 
   const rateMutation = useMutation({
     mutationFn: (data) => api.post('/ratings', data),
-    onSuccess: () => { queryClient.invalidateQueries(['ratings']); setError(''); setMsg('✓ Rating submitted'); setRemarks(''); setTimeout(() => setMsg(''), 2000) },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['ratings'] }); setError(''); setMsg('✓ Rating submitted'); setRemarks(''); setTimeout(() => setMsg(''), 2000) },
     onError: (err) => setError(err.response?.data?.error || 'Failed'),
   })
 

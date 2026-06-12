@@ -13,7 +13,7 @@ export default function CreateTaskForm() {
 
   const createMutation = useMutation({
     mutationFn: (data) => api.post('/tasks', data),
-    onSuccess: () => { queryClient.invalidateQueries(['tasks']); setError(''); setMsg('✓ Task created'); setForm({ title: '', description: '', targetPlatform: 'LinkedIn', taskLink: '', deadline: '' }); setTimeout(() => setMsg(''), 2000) },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); setError(''); setMsg('✓ Task created'); setForm({ title: '', description: '', targetPlatform: 'LinkedIn', taskLink: '', deadline: '' }); setTimeout(() => setMsg(''), 2000) },
     onError: (err) => setError(err.response?.data?.error || 'Failed'),
   })
 

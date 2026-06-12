@@ -26,7 +26,7 @@ export default function Meetings() {
   const createMutation = useMutation({
     mutationFn: (data) => api.post('/meetings', data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['meetings'])
+      queryClient.invalidateQueries({ queryKey: ['meetings'] })
       setShowForm(false)
       setForm({ title: '', description: '', meetingDate: '', startTime: '', endTime: '' })
       setAttendees([])
@@ -34,7 +34,7 @@ export default function Meetings() {
   })
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/meetings/${id}`),
-    onSuccess: () => queryClient.invalidateQueries(['meetings']),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['meetings'] }),
   })
 
   const toggle = (id) => setAttendees(a => a.includes(id) ? a.filter(x => x !== id) : [...a, id])

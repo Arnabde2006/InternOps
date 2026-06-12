@@ -21,7 +21,7 @@ export default function Notifications() {
     refetchInterval: 30000,
   })
 
-  const invalidate = () => queryClient.invalidateQueries(['notifications'])
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['notifications'] })
   const markReadMut = useMutation({ mutationFn: (id) => api.patch(`/notifications/${id}/read`), onSuccess: invalidate })
   const markAllReadMut = useMutation({ mutationFn: () => api.post('/notifications/read-all', {}), onSuccess: invalidate })
   const deleteMut = useMutation({ mutationFn: (id) => api.delete(`/notifications/${id}`), onSuccess: invalidate })

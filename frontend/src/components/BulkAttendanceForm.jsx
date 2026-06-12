@@ -19,7 +19,7 @@ export default function BulkAttendanceForm() {
 
   const bulkMutation = useMutation({
     mutationFn: (data) => api.post('/attendance/bulk', data),
-    onSuccess: () => { queryClient.invalidateQueries(['attendance']); setError(''); setMsg(`✓ Marked ${selectedUsers.length} members`); setSelectedUsers([]); setTimeout(() => setMsg(''), 2500) },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['attendance'] }); setError(''); setMsg(`✓ Marked ${selectedUsers.length} members`); setSelectedUsers([]); setTimeout(() => setMsg(''), 2500) },
     onError: (err) => setError(err.response?.data?.error || 'Bulk mark failed'),
   })
 

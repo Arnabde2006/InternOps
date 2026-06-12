@@ -11,7 +11,7 @@ export default function Sessions() {
 
   const revokeMut = useMutation({
     mutationFn: (sessionId) => api.delete(`/sessions/me/${sessionId}`),
-    onSuccess: () => queryClient.invalidateQueries(['sessions']),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions'] }),
   })
   const revokeAllMut = useMutation({
     mutationFn: () => api.post('/sessions/me/revoke-all', {}),

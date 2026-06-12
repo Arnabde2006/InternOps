@@ -114,7 +114,7 @@ function AddMemberModal({ onClose }) {
 
   const createMut = useMutation({
     mutationFn: (payload) => api.post('/team/members', payload),
-    onSuccess: () => { queryClient.invalidateQueries(['teamMembers']); onClose() },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['teamMembers'] }); onClose() },
     onError: (err) => setError(err.response?.data?.error || 'Failed to add member'),
   })
 
@@ -262,8 +262,8 @@ function MemberDetail({ memberId, onClose }) {
   })
 
   const invalidate = () => {
-    queryClient.invalidateQueries(['teamMember', memberId])
-    queryClient.invalidateQueries(['teamMembers'])
+    queryClient.invalidateQueries({ queryKey: ['teamMember', memberId] })
+    queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
   }
 
   const saveMut = useMutation({

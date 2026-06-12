@@ -32,7 +32,7 @@ export default function Profile() {
     onSuccess: (_res, vars) => {
       flash('Profile updated')
       if (vars?.full_name && user) setAuth({ user: { ...user, fullName: vars.full_name } })
-      queryClient.invalidateQueries(['myProfile'])
+      queryClient.invalidateQueries({ queryKey: ['myProfile'] })
     },
     onError: (err) => setError(err.response?.data?.error || 'Failed'),
   })
@@ -46,7 +46,7 @@ export default function Profile() {
       const form = new FormData(); form.append('file', file)
       return api.post('/uploads/avatar', form, { headers: { 'Content-Type': 'multipart/form-data' } })
     },
-    onSuccess: () => { flash('Avatar updated'); queryClient.invalidateQueries(['myProfile']) },
+    onSuccess: () => { flash('Avatar updated'); queryClient.invalidateQueries({ queryKey: ['myProfile'] }) },
     onError: (err) => setError(err.response?.data?.error || 'Upload failed'),
   })
 

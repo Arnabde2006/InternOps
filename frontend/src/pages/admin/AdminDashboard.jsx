@@ -18,7 +18,7 @@ export default function AdminDashboard() {
     queryFn: () => api.get(`/users?page=${page}&limit=10`).then(res => res.data),
   })
 
-  const inv = () => queryClient.invalidateQueries(['adminUsers'])
+  const inv = () => queryClient.invalidateQueries({ queryKey: ['adminUsers'] })
   const suspendMut = useMutation({ mutationFn: (id) => api.patch(`/users/${id}/suspend`), onSuccess: inv })
   const activateMut = useMutation({ mutationFn: (id) => api.patch(`/users/${id}/activate`), onSuccess: inv })
   const deleteMut = useMutation({ mutationFn: (id) => api.delete(`/users/${id}`), onSuccess: inv })

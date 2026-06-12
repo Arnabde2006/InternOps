@@ -33,7 +33,7 @@ export default function Tasks() {
       form.append('image', file)
       return api.post('/proofs/submit', form, { headers: { 'Content-Type': 'multipart/form-data' } })
     },
-    onSuccess: () => { refetchProofs(); queryClient.invalidateQueries(['proofs']) },
+    onSuccess: () => { refetchProofs(); queryClient.invalidateQueries({ queryKey: ['proofs'] }) },
   })
   const verifyMutation = useMutation({ mutationFn: (proofId) => api.patch(`/proofs/${proofId}/verify`), onSuccess: () => refetchProofs() })
 
