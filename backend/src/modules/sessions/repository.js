@@ -30,7 +30,7 @@ async function getUserSessions(userId) {
      ORDER BY created_at DESC`,
     [userId]
   );
-  
+
   return res.rows.map((row) => ({
     sessionId: row.id,
     createdAt: row.created_at || 'N/A', // Handle Postgres dates safely too
