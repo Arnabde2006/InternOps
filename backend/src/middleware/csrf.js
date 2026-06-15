@@ -28,7 +28,7 @@ const EXEMPT = [
 
 const csrfMiddleware = async (request, reply) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return;
-  if (!request.url) return; 
+  if (!request.url) return;
   if (EXEMPT.some((p) => request.url.startsWith(p))) return;
 
   const token = request.headers['x-csrf-token'];
