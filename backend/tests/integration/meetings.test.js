@@ -97,7 +97,10 @@ describe('Meetings Integration Tests', () => {
       const loginRes = await app.inject({
         method: 'POST',
         url: '/api/auth/login',
-        headers: { 'X-CSRF-Token': csrfToken, 'Content-Type': 'application/json' },
+        headers: {
+          'X-CSRF-Token': csrfToken,
+          'Content-Type': 'application/json',
+        },
         payload: { email: 'manager@internops.com', password: 'Manager@123' },
       });
       const managerToken = JSON.parse(loginRes.body).accessToken;
