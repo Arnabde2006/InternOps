@@ -50,10 +50,10 @@ export default function Tasks() {
       });
     },
     onSuccess: () => {
-  refetchProofs();
-  queryClient.invalidateQueries({ queryKey: ['proofs'] });
-  queryClient.invalidateQueries({ queryKey: ['tasks'] });
-},
+      refetchProofs();
+      queryClient.invalidateQueries({ queryKey: ['proofs'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
   });
   const verifyMutation = useMutation({
     mutationFn: (proofId) => api.patch(`/proofs/${proofId}/verify`),
