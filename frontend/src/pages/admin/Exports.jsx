@@ -97,7 +97,9 @@ export default function Exports() {
               className={`p-5 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               hover={!isDisabled}
             >
-              <div onClick={() => !isDisabled && download(e.key, e.requiresDates)}>
+              <div
+                onClick={() => !isDisabled && download(e.key, e.requiresDates)}
+              >
                 <div
                   className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${e.grad} text-white flex items-center justify-center text-2xl shadow-lg mb-3`}
                 >
@@ -106,9 +108,13 @@ export default function Exports() {
                 <h3 className="font-bold text-gray-800">{e.label} CSV</h3>
                 <p className="text-sm text-gray-500 mb-3">{e.desc}</p>
                 {isDisabled ? (
-                  <p className="text-xs text-amber-600 font-medium">Select a date range to enable</p>
+                  <p className="text-xs text-amber-600 font-medium">
+                    Select a date range to enable
+                  </p>
                 ) : (
-                  <span className="text-indigo-600 text-sm font-semibold">⬇ Download →</span>
+                  <span className="text-indigo-600 text-sm font-semibold">
+                    ⬇ Download →
+                  </span>
                 )}
               </div>
             </Card>
