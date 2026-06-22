@@ -62,8 +62,12 @@ export default function Attendance() {
           <CalendarCheck className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Attendance</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Track and manage daily attendance records</p>
+          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+            Attendance
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Track and manage daily attendance records
+          </p>
         </div>
       </div>
 
@@ -130,7 +134,10 @@ export default function Attendance() {
 
                 <tbody className="divide-y divide-gray-50">
                   {records.map((a) => (
-                    <tr key={a.id} className="hover:bg-gray-50/50 transition-colors">
+                    <tr
+                      key={a.id}
+                      className="hover:bg-gray-50/50 transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                         {new Date(a.date).toLocaleDateString('en-GB', {
                           day: '2-digit',
@@ -149,7 +156,9 @@ export default function Attendance() {
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 text-gray-600">{a.remarks || '—'}</td>
+                      <td className="px-6 py-4 text-gray-600">
+                        {a.remarks || '—'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

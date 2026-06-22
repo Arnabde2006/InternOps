@@ -22,8 +22,9 @@ export default function Departments() {
     queryFn: () => api.get('/departments').then((r) => r.data),
   });
 
-  const inv = () => queryClient.invalidateQueries({ queryKey: ['departments'] });
-  
+  const inv = () =>
+    queryClient.invalidateQueries({ queryKey: ['departments'] });
+
   const createMut = useMutation({
     mutationFn: (n) => api.post('/departments', { name: n }),
     onSuccess: () => {
@@ -31,7 +32,8 @@ export default function Departments() {
       setError('');
       inv();
     },
-    onError: (err) => setError(err.response?.data?.error || 'Failed to create department'),
+    onError: (err) =>
+      setError(err.response?.data?.error || 'Failed to create department'),
   });
 
   const deleteMut = useMutation({
@@ -57,8 +59,12 @@ export default function Departments() {
           <Building2 className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Departments</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Organize your workforce into structural units</p>
+          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+            Departments
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Organize your workforce into structural units
+          </p>
         </div>
       </div>
 
@@ -107,7 +113,10 @@ export default function Departments() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {departments.map((d, i) => (
-            <Card key={d.id} className="p-5 hover:shadow-md transition-shadow group flex items-center gap-4">
+            <Card
+              key={d.id}
+              className="p-5 hover:shadow-md transition-shadow group flex items-center gap-4"
+            >
               <div
                 className={`w-12 h-12 rounded-xl bg-gradient-to-br ${COLORS[i % COLORS.length]} text-white flex items-center justify-center shadow-md shrink-0`}
               >
@@ -116,7 +125,10 @@ export default function Departments() {
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-gray-900 truncate">{d.name}</p>
                 <p className="text-xs text-gray-400 font-medium">
-                  Created {d.created_at ? new Date(d.created_at).toLocaleDateString() : '—'}
+                  Created{' '}
+                  {d.created_at
+                    ? new Date(d.created_at).toLocaleDateString()
+                    : '—'}
                 </p>
               </div>
               <button
@@ -130,7 +142,11 @@ export default function Departments() {
                 className="text-gray-300 hover:text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                 title="Delete department"
               >
-                {deletingId === d.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {deletingId === d.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
               </button>
             </Card>
           ))}

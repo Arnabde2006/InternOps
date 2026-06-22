@@ -35,8 +35,12 @@ export default function AuditLog() {
           <ScrollText className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Audit Log</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Immutable trail of sensitive system actions</p>
+          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+            Audit Log
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Immutable trail of sensitive system actions
+          </p>
         </div>
       </div>
 
@@ -47,7 +51,10 @@ export default function AuditLog() {
       ) : (
         <Table head={['Time', 'Actor', 'Action', 'Resource', 'Details']}>
           {logs?.map((log) => (
-            <tr key={log.id} className="border-t hover:bg-indigo-50/30 transition">
+            <tr
+              key={log.id}
+              className="border-t hover:bg-indigo-50/30 transition"
+            >
               <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
                 {new Date(log.created_at).toLocaleString()}
               </td>
@@ -55,8 +62,8 @@ export default function AuditLog() {
                 {log.actor_email
                   ? `${log.actor_name || ''} (${log.actor_email})`
                   : log.user_id
-                  ? log.user_id.substring(0, 8) + '…'
-                  : 'system'}
+                    ? log.user_id.substring(0, 8) + '…'
+                    : 'system'}
               </td>
               <td className="p-4">
                 <Badge color={actionColor(log.action)}>{log.action}</Badge>
@@ -82,11 +89,11 @@ export default function AuditLog() {
         >
           <ChevronLeft className="w-4 h-4" /> Prev
         </button>
-        
+
         <div className="px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-bold border border-indigo-100">
           Page {page} of {totalPages || 1}
         </div>
-        
+
         <button
           className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-600 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition"
           disabled={page >= totalPages}

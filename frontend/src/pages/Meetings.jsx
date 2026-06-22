@@ -76,17 +76,25 @@ export default function Meetings() {
             <Video className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Meetings</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Schedule and track team meetings</p>
+            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+              Meetings
+            </h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Schedule and track team meetings
+            </p>
           </div>
         </div>
 
         {canCreate && (
           <Btn onClick={() => setShowForm((s) => !s)}>
             {showForm ? (
-              <span className="flex items-center gap-1.5"><X className="w-4 h-4" /> Cancel</span>
+              <span className="flex items-center gap-1.5">
+                <X className="w-4 h-4" /> Cancel
+              </span>
             ) : (
-              <span className="flex items-center gap-1.5"><Plus className="w-4 h-4" /> Schedule meeting</span>
+              <span className="flex items-center gap-1.5">
+                <Plus className="w-4 h-4" /> Schedule meeting
+              </span>
             )}
           </Btn>
         )}
@@ -96,7 +104,9 @@ export default function Meetings() {
         <Card className="p-5 mb-6 animate-fade-in-up border-blue-100 shadow-md">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Title</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">
+                Title
+              </label>
               <Input
                 placeholder="E.g., Weekly Sync"
                 value={form.title}
@@ -105,7 +115,9 @@ export default function Meetings() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Agenda</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">
+                Agenda
+              </label>
               <Textarea
                 placeholder="Topics to discuss..."
                 rows={2}
@@ -117,7 +129,9 @@ export default function Meetings() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Date</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">
+                  Date
+                </label>
                 <Input
                   type="date"
                   value={form.meetingDate}
@@ -128,7 +142,9 @@ export default function Meetings() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Start Time</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">
+                  Start Time
+                </label>
                 <Input
                   type="time"
                   value={form.startTime}
@@ -138,7 +154,9 @@ export default function Meetings() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">End Time</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">
+                  End Time
+                </label>
                 <Input
                   type="time"
                   value={form.endTime}
@@ -190,29 +208,41 @@ export default function Meetings() {
           <Spinner />
         </div>
       ) : !meetings?.length ? (
-        <EmptyState 
-          icon={<Calendar className="w-12 h-12 text-blue-200" />} 
-          title="No meetings scheduled" 
-          text={canCreate ? "Schedule your first team sync above." : "You have no upcoming meetings."}
+        <EmptyState
+          icon={<Calendar className="w-12 h-12 text-blue-200" />}
+          title="No meetings scheduled"
+          text={
+            canCreate
+              ? 'Schedule your first team sync above.'
+              : 'You have no upcoming meetings.'
+          }
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {meetings.map((m) => (
-            <Card key={m.id} className="p-5 hover:shadow-md transition-shadow group">
+            <Card
+              key={m.id}
+              className="p-5 hover:shadow-md transition-shadow group"
+            >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                     <Video className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-800 leading-tight">{m.title}</h3>
+                    <h3 className="font-bold text-gray-800 leading-tight">
+                      {m.title}
+                    </h3>
                     <div className="mt-1">
                       <Badge color="blue" className="font-medium">
-                        {new Date(m.meeting_date).toLocaleDateString(undefined, {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
+                        {new Date(m.meeting_date).toLocaleDateString(
+                          undefined,
+                          {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          }
+                        )}
                       </Badge>
                     </div>
                   </div>
@@ -227,13 +257,13 @@ export default function Meetings() {
                   </button>
                 )}
               </div>
-              
+
               {m.description && (
                 <p className="text-sm text-gray-600 mt-4 leading-relaxed bg-gray-50/50 p-3 rounded-lg border border-gray-100">
                   {m.description}
                 </p>
               )}
-              
+
               <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mt-4 pt-4 border-t border-gray-50">
                 <Clock className="w-3.5 h-3.5 text-gray-400" />
                 {m.start_time || 'TBD'}

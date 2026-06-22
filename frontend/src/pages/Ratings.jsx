@@ -51,8 +51,12 @@ export default function Ratings() {
           <Star className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Ratings</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Evaluate performance and view historical scores</p>
+          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+            Ratings
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Evaluate performance and view historical scores
+          </p>
         </div>
       </div>
 
@@ -121,17 +125,21 @@ export default function Ratings() {
                 <div className="flex items-center justify-between mb-2">
                   <Stars value={r.score} />
                   <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-md">
-                    {new Date(r.created_at).toLocaleDateString(undefined, { 
-                      month: 'short', 
+                    {new Date(r.created_at).toLocaleDateString(undefined, {
+                      month: 'short',
                       day: 'numeric',
-                      year: 'numeric'
+                      year: 'numeric',
                     })}
                   </span>
                 </div>
                 {r.remarks ? (
-                  <p className="text-gray-700 text-sm leading-relaxed">{r.remarks}</p>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {r.remarks}
+                  </p>
                 ) : (
-                  <p className="text-gray-400 text-sm italic">No remarks provided.</p>
+                  <p className="text-gray-400 text-sm italic">
+                    No remarks provided.
+                  </p>
                 )}
               </div>
             ))}

@@ -947,8 +947,12 @@ export default function Team() {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">My Team</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Manage your team members and view their status</p>
+            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+              My Team
+            </h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Manage your team members and view their status
+            </p>
           </div>
         </div>
 
@@ -967,9 +971,9 @@ export default function Team() {
             >
               + Add Member
             </button>
-    )}
-  </div>
-</div>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
         <StatCard label="Total members" value={members.length} />

@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, BellOff, Check, CheckCircle2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Bell,
+  BellOff,
+  Check,
+  CheckCircle2,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import api from '../lib/axios';
 import { Card, Btn, EmptyState, Spinner } from '../components/ui';
 
@@ -26,17 +34,17 @@ export default function Notifications() {
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    
+
   const markReadMut = useMutation({
     mutationFn: (id) => api.patch(`/notifications/${id}/read`),
     onSuccess: invalidate,
   });
-  
+
   const markAllReadMut = useMutation({
     mutationFn: () => api.post('/notifications/read-all', {}),
     onSuccess: invalidate,
   });
-  
+
   const deleteMut = useMutation({
     mutationFn: (id) => api.delete(`/notifications/${id}`),
     onSuccess: invalidate,
@@ -57,10 +65,14 @@ export default function Notifications() {
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Notifications</h1>
+            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+              Notifications
+            </h1>
             <p className="text-sm text-gray-500 mt-0.5">
               {unread ? (
-                <span className="font-medium text-indigo-600">{unread} unread activity updates</span>
+                <span className="font-medium text-indigo-600">
+                  {unread} unread activity updates
+                </span>
               ) : (
                 'You are all caught up'
               )}
@@ -69,9 +81,13 @@ export default function Notifications() {
         </div>
 
         {items.length > 0 && (
-          <Btn variant="outline" onClick={() => markAllReadMut.mutate()} disabled={markAllReadMut.isPending || unread === 0}>
+          <Btn
+            variant="outline"
+            onClick={() => markAllReadMut.mutate()}
+            disabled={markAllReadMut.isPending || unread === 0}
+          >
             <span className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" /> 
+              <CheckCircle2 className="w-4 h-4" />
               {markAllReadMut.isPending ? 'Marking...' : 'Mark all read'}
             </span>
           </Btn>
@@ -94,30 +110,32 @@ export default function Notifications() {
             <Card
               key={n.id}
               className={`p-4 flex items-start gap-4 transition-all duration-300 ${
-                n.read 
-                  ? 'bg-white hover:border-gray-200 hover:shadow-sm' 
+                n.read
+                  ? 'bg-white hover:border-gray-200 hover:shadow-sm'
                   : 'bg-indigo-50/50 border-indigo-100 shadow-sm'
               }`}
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm ${
-                  n.read 
-                    ? 'bg-gray-100 text-gray-400' 
+                  n.read
+                    ? 'bg-gray-100 text-gray-400'
                     : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
                 }`}
               >
                 <Bell className="w-5 h-5" />
               </div>
-              
+
               <div className="flex-1 min-w-0 pt-0.5">
-                <p className={`text-sm ${n.read ? 'text-gray-700' : 'text-gray-900 font-medium'}`}>
+                <p
+                  className={`text-sm ${n.read ? 'text-gray-700' : 'text-gray-900 font-medium'}`}
+                >
                   {n.message}
                 </p>
                 <p className="text-xs text-gray-400 mt-1 font-medium flex items-center gap-1.5">
                   {timeAgo(n.created_at)}
                 </p>
               </div>
-              
+
               <div className="flex items-center gap-3 shrink-0 pt-1">
                 {!n.read && (
                   <button

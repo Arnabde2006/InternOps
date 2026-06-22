@@ -32,10 +32,30 @@ const MOCK_RATINGS = [
 ];
 
 const MOCK_TASKS = [
-  { id: 'mock-task-1', title: 'LinkedIn Outreach Campaign', verified: 18, pending: 4 },
-  { id: 'mock-task-2', title: 'Instagram Marketing Sprint', verified: 25, pending: 6 },
-  { id: 'mock-task-3', title: 'Community Engagement Drive', verified: 14, pending: 2 },
-  { id: 'mock-task-4', title: 'Weekly Progress Report', verified: 30, pending: 5 },
+  {
+    id: 'mock-task-1',
+    title: 'LinkedIn Outreach Campaign',
+    verified: 18,
+    pending: 4,
+  },
+  {
+    id: 'mock-task-2',
+    title: 'Instagram Marketing Sprint',
+    verified: 25,
+    pending: 6,
+  },
+  {
+    id: 'mock-task-3',
+    title: 'Community Engagement Drive',
+    verified: 14,
+    pending: 2,
+  },
+  {
+    id: 'mock-task-4',
+    title: 'Weekly Progress Report',
+    verified: 30,
+    pending: 5,
+  },
 ];
 
 export default function Reports() {
@@ -45,12 +65,18 @@ export default function Reports() {
 
   const attendanceQuery = useQuery({
     queryKey: ['reportAttendance', from, to],
-    queryFn: () => api.get(`/reports/attendance-summary?from=${from}&to=${to}`).then((r) => r.data),
+    queryFn: () =>
+      api
+        .get(`/reports/attendance-summary?from=${from}&to=${to}`)
+        .then((r) => r.data),
     enabled: !!from && !!to,
   });
   const ratingsQuery = useQuery({
     queryKey: ['reportRatings', from, to],
-    queryFn: () => api.get(`/reports/ratings-summary?from=${from}&to=${to}`).then((r) => r.data),
+    queryFn: () =>
+      api
+        .get(`/reports/ratings-summary?from=${from}&to=${to}`)
+        .then((r) => r.data),
     enabled: !!from && !!to,
   });
   const tasksQuery = useQuery({
@@ -58,8 +84,10 @@ export default function Reports() {
     queryFn: () => api.get('/reports/task-completion').then((r) => r.data),
   });
 
-  const attendanceData = attendanceQuery.data?.length > 0 ? attendanceQuery.data : MOCK_ATTENDANCE;
-  const ratingsData = ratingsQuery.data?.length > 0 ? ratingsQuery.data : MOCK_RATINGS;
+  const attendanceData =
+    attendanceQuery.data?.length > 0 ? attendanceQuery.data : MOCK_ATTENDANCE;
+  const ratingsData =
+    ratingsQuery.data?.length > 0 ? ratingsQuery.data : MOCK_RATINGS;
   const tasksData = tasksQuery.data?.length > 0 ? tasksQuery.data : MOCK_TASKS;
 
   return (
@@ -69,19 +97,35 @@ export default function Reports() {
           <BarChart3 className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Reports</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Aggregated attendance, ratings & task stats</p>
+          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+            Reports
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Aggregated attendance, ratings & task stats
+          </p>
         </div>
       </div>
 
       <Card className="p-4 mb-6 flex flex-wrap gap-4 items-end border-indigo-100 shadow-sm">
         <div className="flex-1 min-w-[150px]">
-          <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">From</label>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">
+            From
+          </label>
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
         </div>
         <div className="flex-1 min-w-[150px]">
-          <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">To</label>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">
+            To
+          </label>
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
         </div>
       </Card>
 
@@ -90,10 +134,15 @@ export default function Reports() {
           <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-indigo-500" /> Attendance Summary
           </h3>
-          {attendanceQuery.isLoading ? <Spinner /> : (
+          {attendanceQuery.isLoading ? (
+            <Spinner />
+          ) : (
             <div className="space-y-3">
               {attendanceData.map((row) => (
-                <div key={row.role + row.status} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded-lg">
+                <div
+                  key={row.role + row.status}
+                  className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded-lg"
+                >
                   <div className="flex gap-2">
                     <Badge color={ROLE_COLOR[row.role]}>{row.role}</Badge>
                     <Badge color={STATUS_COLOR[row.status]}>{row.status}</Badge>
@@ -109,13 +158,19 @@ export default function Reports() {
           <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
             <Star className="w-5 h-5 text-amber-500" /> Ratings Summary
           </h3>
-          {ratingsQuery.isLoading ? <Spinner /> : (
+          {ratingsQuery.isLoading ? (
+            <Spinner />
+          ) : (
             <div className="space-y-3">
               {ratingsData.map((row) => (
-                <div key={row.role} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded-lg">
+                <div
+                  key={row.role}
+                  className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded-lg"
+                >
                   <Badge color={ROLE_COLOR[row.role]}>{row.role}</Badge>
                   <span className="font-medium text-gray-700">
-                    {parseFloat(row.avg_score).toFixed(2)} <span className="text-gray-400">({row.total})</span>
+                    {parseFloat(row.avg_score).toFixed(2)}{' '}
+                    <span className="text-gray-400">({row.total})</span>
                   </span>
                 </div>
               ))}
@@ -127,19 +182,28 @@ export default function Reports() {
           <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
             <Target className="w-5 h-5 text-emerald-500" /> Task Completion
           </h3>
-          {tasksQuery.isLoading ? <Spinner /> : (
+          {tasksQuery.isLoading ? (
+            <Spinner />
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {tasksData.map((task) => {
                 const total = (task.verified || 0) + (task.pending || 0);
-                const pct = total ? Math.round((task.verified / total) * 100) : 0;
+                const pct = total
+                  ? Math.round((task.verified / total) * 100)
+                  : 0;
                 return (
                   <div key={task.id} className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="font-semibold text-gray-700">{task.title}</span>
+                      <span className="font-semibold text-gray-700">
+                        {task.title}
+                      </span>
                       <span className="text-gray-500">{pct}%</span>
                     </div>
                     <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                      <div
+                        className="h-full bg-emerald-500"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
                 );

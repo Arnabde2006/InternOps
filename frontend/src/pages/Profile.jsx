@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Camera, Pencil, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  User,
+  Camera,
+  Pencil,
+  Lock,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
 import api from '../lib/axios';
 import { Card, Btn, Input, Badge, Spinner } from '../components/ui';
 import useAuthStore from '../store/auth';
@@ -44,7 +51,7 @@ export default function Profile() {
     setError('');
     setTimeout(() => setMessage(''), 2500);
   };
-  
+
   const updateProfileMut = useMutation({
     mutationFn: (data) => api.patch('/users/me', data),
     onSuccess: (_res, vars) => {
@@ -53,9 +60,10 @@ export default function Profile() {
         setAuth({ user: { ...user, fullName: vars.full_name } });
       queryClient.invalidateQueries({ queryKey: ['myProfile'] });
     },
-    onError: (err) => setError(err.response?.data?.error || 'Failed to update profile'),
+    onError: (err) =>
+      setError(err.response?.data?.error || 'Failed to update profile'),
   });
-  
+
   const changePasswordMut = useMutation({
     mutationFn: (data) => api.patch('/users/me/password', data),
     onSuccess: () => {
@@ -63,9 +71,10 @@ export default function Profile() {
       setOldPassword('');
       setNewPassword('');
     },
-    onError: (err) => setError(err.response?.data?.error || 'Failed to change password'),
+    onError: (err) =>
+      setError(err.response?.data?.error || 'Failed to change password'),
   });
-  
+
   const avatarMut = useMutation({
     mutationFn: (file) => {
       const form = new FormData();
@@ -78,10 +87,16 @@ export default function Profile() {
       flash('Avatar updated successfully');
       queryClient.invalidateQueries({ queryKey: ['myProfile'] });
     },
-    onError: (err) => setError(err.response?.data?.error || 'Avatar upload failed'),
+    onError: (err) =>
+      setError(err.response?.data?.error || 'Avatar upload failed'),
   });
 
-  if (isLoading) return <div className="flex justify-center p-12"><Spinner label="Loading profile..." /></div>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center p-12">
+        <Spinner label="Loading profile..." />
+      </div>
+    );
 
   return (
     <div className="max-w-4xl mx-auto animate-fade-in-up">
@@ -91,8 +106,12 @@ export default function Profile() {
           <User className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">My Profile</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage your account details and security</p>
+          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+            My Profile
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Manage your account details and security
+          </p>
         </div>
       </div>
 
@@ -159,7 +178,9 @@ export default function Profile() {
             <h3 className="text-2xl font-extrabold text-gray-900 truncate">
               {profile?.full_name || 'Unnamed User'}
             </h3>
-            <p className="text-sm font-medium text-gray-500 mb-2 truncate">{profile?.email}</p>
+            <p className="text-sm font-medium text-gray-500 mb-2 truncate">
+              {profile?.email}
+            </p>
             <div className="flex flex-wrap gap-2">
               <Badge color={ROLE_COLOR[profile?.role] || 'gray'}>
                 {profile?.role}
@@ -181,7 +202,7 @@ export default function Profile() {
             </div>
             <h3 className="font-bold text-gray-800">Personal Information</h3>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
@@ -193,9 +214,11 @@ export default function Profile() {
                 placeholder="Enter your full name"
               />
             </div>
-            <Btn 
+            <Btn
               onClick={() => updateProfileMut.mutate({ full_name: fullName })}
-              disabled={updateProfileMut.isPending || fullName === profile?.full_name}
+              disabled={
+                updateProfileMut.isPending || fullName === profile?.full_name
+              }
               className="w-full sm:w-auto"
             >
               {updateProfileMut.isPending ? 'Saving...' : 'Save Changes'}
@@ -211,7 +234,7 @@ export default function Profile() {
             </div>
             <h3 className="font-bold text-gray-800">Security</h3>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
@@ -237,8 +260,14 @@ export default function Profile() {
             </div>
             <Btn
               variant="success"
-              onClick={() => changePasswordMut.mutate({ oldPassword, newPassword })}
-              disabled={changePasswordMut.isPending || !oldPassword || newPassword.length < 8}
+              onClick={() =>
+                changePasswordMut.mutate({ oldPassword, newPassword })
+              }
+              disabled={
+                changePasswordMut.isPending ||
+                !oldPassword ||
+                newPassword.length < 8
+              }
               className="w-full sm:w-auto"
             >
               {changePasswordMut.isPending ? 'Updating...' : 'Update Password'}

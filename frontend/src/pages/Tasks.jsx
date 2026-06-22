@@ -12,7 +12,7 @@ import {
   Link as LinkIcon,
   Clock,
   Plus,
-  X
+  X,
 } from 'lucide-react';
 import api from '../lib/axios';
 import useAuthStore from '../store/auth';
@@ -103,17 +103,25 @@ export default function Tasks() {
             <Target className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Social Media Tasks</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Campaigns & proof verification</p>
+            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+              Social Media Tasks
+            </h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Campaigns & proof verification
+            </p>
           </div>
         </div>
 
         {canCreateTask && (
           <Btn onClick={() => setShowForm((s) => !s)}>
             {showForm ? (
-              <span className="flex items-center gap-1"><X className="w-4 h-4" /> Cancel</span>
+              <span className="flex items-center gap-1">
+                <X className="w-4 h-4" /> Cancel
+              </span>
             ) : (
-              <span className="flex items-center gap-1"><Plus className="w-4 h-4" /> Create task</span>
+              <span className="flex items-center gap-1">
+                <Plus className="w-4 h-4" /> Create task
+              </span>
             )}
           </Btn>
         )}
@@ -143,7 +151,9 @@ export default function Tasks() {
             <Card key={t.id} className="p-5 card-hover">
               <div className="flex items-start gap-3">
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-fuchsia-600 text-white flex items-center justify-center text-xl shrink-0">
-                  {PLATFORM_ICON[t.target_platform] || <Target className="w-5 h-5" />}
+                  {PLATFORM_ICON[t.target_platform] || (
+                    <Target className="w-5 h-5" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -265,7 +275,9 @@ export default function Tasks() {
                             variant="success"
                             onClick={() => verifyMutation.mutate(p.id)}
                           >
-                            <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4" /> Verify</span>
+                            <span className="flex items-center gap-1">
+                              <CheckCircle className="w-4 h-4" /> Verify
+                            </span>
                           </Btn>
                         )}
                       </div>
