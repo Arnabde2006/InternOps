@@ -61,6 +61,14 @@ async function routes(fastify) {
         sameSite: 'strict',
         path: '/api/auth/refresh',
       });
+
+      req.auditOnResponse = {
+        userId: result.user.id,
+        action: 'LOGIN',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      };
+
       return {
         accessToken: result.accessToken,
         user: result.user,
@@ -116,6 +124,12 @@ async function routes(fastify) {
       );
 
       reply.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+      req.auditOnResponse = {
+        userId: req.user.id,
+        action: 'LOGOUT',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      };
       return { message: 'Logged out' };
     }
   );
