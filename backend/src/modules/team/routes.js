@@ -242,11 +242,9 @@ async function routes(fastify) {
         req.user.role !== 'ADMIN' &&
         ROLE_RANK[role] >= ROLE_RANK[req.user.role]
       ) {
-        return reply
-          .status(403)
-          .send({
-            error: `Only assign roles below your own (${req.user.role})`,
-          });
+        return reply.status(403).send({
+          error: `Only assign roles below your own (${req.user.role})`,
+        });
       }
 
       const result = await withHierarchyTx([req.params.id], async (client) => {
