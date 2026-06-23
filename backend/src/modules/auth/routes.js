@@ -116,6 +116,8 @@ async function routes(fastify) {
       );
 
       reply.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+      reply.clearCookie('csrf-sid', { path: '/' });
+      reply.clearCookie('csrf-token', { path: '/' });
       return { message: 'Logged out' };
     }
   );
