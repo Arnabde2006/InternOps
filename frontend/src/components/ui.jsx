@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+// Shared, reusable UI building blocks for a consistent, polished, animated look.
 
 export function PageHeader({ title, subtitle, icon, actions }) {
   return (
@@ -274,5 +276,65 @@ export function Table({ head, children }) {
         <tbody>{children}</tbody>
       </table>
     </Card>
+  );
+}
+
+// Confirmation dialog for destructive actions (delete, deactivate, etc).
+// Locks page scroll and blurs the app background while open, and cleans
+// both up automatically on close or unmount.
+export function ConfirmationModal({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onCancel,
+}) {
+  useEffect(() => {
+    const root = document.getElementById('root');
+
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      if (root) root.classList.add('blur-sm', 'transition-all', 'duration-300');
+    } else {
+      document.body.style.overflow = 'unset';
+      if (root)
+        root.classList.remove('blur-sm', 'transition-all', 'duration-300');
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+      if (root)
+        root.classList.remove('blur-sm', 'transition-all', 'duration-300');
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  // Rendered via portal directly under <body>, as a sibling of #root —
+  // not a descendant of it. This keeps the modal sharp and on top while
+  // the blur effect above is applied only to #root (the app behind it).
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onCancel}></div>
+      <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+        <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+        <p className="mt-2 text-sm text-gray-600">{message}</p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 text-sm font-medium text-white bg-rose-600 rounded-lg hover:bg-rose-700 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }

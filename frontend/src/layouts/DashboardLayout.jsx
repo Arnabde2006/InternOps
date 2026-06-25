@@ -20,6 +20,7 @@ import {
   Sun,
   Moon,
   Menu,
+  Megaphone,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -62,6 +63,12 @@ const nav = [
     path: '/exports',
     label: 'Exports',
     icon: Download,
+    roles: ['ADMIN', 'SENIOR_TL'],
+  },
+  {
+    path: '/notices',
+    label: 'Notice Board',
+    icon: Megaphone,
     roles: ['ADMIN', 'SENIOR_TL'],
   },
 ];

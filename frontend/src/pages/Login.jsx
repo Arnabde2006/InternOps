@@ -1,10 +1,73 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query'; // added useQuery
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Zap } from 'lucide-react';
 import api from '../lib/axios';
 import useAuthStore from '../store/auth';
 
+// Category label colours
+const CATEGORY_STYLES = {
+  REMINDER: 'text-brand-orange',
+  NEWS: 'text-brand-green',
+  ALERT: 'text-red-400',
+  GENERAL: 'text-gray-400',
+};
+
+//  Notice list — owns its own loading / error / empty states
+function NoticeList() {
+  const {
+    data: notices,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['public-notices'],
+    queryFn: () => api.get('/notices/public').then((r) => r.data),
+    staleTime: 1000 * 60 * 5, // cache for 5 min — notices don't change per keystroke
+    retry: 1,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 animate-pulse">
+        {[1, 2].map((n) => (
+          <div key={n} className="pt-4 first:pt-0">
+            <div className="h-3 w-24 bg-white/10 rounded mb-2" />
+            <div className="h-4 w-full bg-white/5 rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <p className="text-xs text-gray-500 italic">
+        Announcements unavailable right now.
+      </p>
+    );
+  }
+
+  if (!notices?.length) {
+    return <p className="text-xs text-gray-400 italic">No active notices.</p>;
+  }
+
+  return (
+    <div className="space-y-4 divide-y divide-white/10">
+      {notices.map((notice) => (
+        <div key={notice.id} className="pt-4 first:pt-0">
+          <p
+            className={`text-xs font-semibold ${CATEGORY_STYLES[notice.category] ?? CATEGORY_STYLES.GENERAL}`}
+          >
+            {notice.title}
+          </p>
+          <p className="text-sm text-gray-200 mt-1">{notice.content}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Login page
 export default function Login() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -56,7 +119,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900  text-white">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 text-white">
       <div
         className="absolute inset-0 opacity-[0.07] pointer-events-none"
         style={{
@@ -64,6 +127,7 @@ export default function Login() {
           backgroundSize: '56px 100px',
         }}
       />
+
       {/* Left Side (Credentials Form) */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 bg-black/20 backdrop-blur-none">
         <div className="w-full max-w-md animate-pop-in">
@@ -79,6 +143,7 @@ export default function Login() {
               Workforce &amp; Intern Management Platform
             </p>
           </div>
+
           {/* Card */}
           <div className="rounded-2xl border border-white/10 bg-black/25 backdrop-blur-lg shadow-2xl p-8">
             <h2 className="text-xl font-bold text-white mb-1">Welcome back</h2>
@@ -155,13 +220,14 @@ export default function Login() {
               </Link>
             </div>
           </div>
+
           <p className="text-center text-gray-400 text-xs mt-6">
             © {new Date().getFullYear()} InternOps · Secure role-based access
           </p>
         </div>
       </div>
 
-      {/* Right Side (Notice Board & Branding) */}
+      {/* Right Side (Notice Board) */}
       <div className="flex w-full lg:w-1/2 flex-col justify-center p-8 lg:p-12 bg-black/10 border-t lg:border-t-0 lg:border-l border-white/5">
         <div className="max-w-md mx-auto w-full space-y-6">
           <div className="inline-flex items-center gap-2 bg-brand-orange/10 text-brand-orange px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
@@ -181,27 +247,8 @@ export default function Login() {
               <span className="text-brand-orange">⚡</span> Latest News
             </h3>
 
-            <div className="space-y-4 divide-y divide-white/10">
-              <div className="pt-4 first:pt-0">
-                <p className="text-xs text-brand-orange font-semibold">
-                  Weekly Reminder
-                </p>
-                <p className="text-sm text-gray-200 mt-1">
-                  Remember to submit your weekly task remarks and proof
-                  screenshots by Friday at 5:00 PM.
-                </p>
-              </div>
-
-              <div className="pt-4">
-                <p className="text-xs text-brand-green font-semibold">
-                  AI Assistant Online
-                </p>
-                <p className="text-sm text-gray-200 mt-1">
-                  The brand new AI Assistant is online. Select your role to get
-                  assistance with ratings, proof uploads, and platform queries.
-                </p>
-              </div>
-            </div>
+            {/* Replaced hardcoded notices with data-driven component */}
+            <NoticeList />
           </div>
         </div>
       </div>
