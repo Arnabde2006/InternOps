@@ -6,7 +6,7 @@ client.collectDefaultMetrics();
 const httpRequestDurationMicroseconds = new client.Histogram({
   name: 'http_request_duration_ms',
   help: 'Duration of HTTP requests in ms',
-  labelNames: ['method', 'route', 'status_code']
+  labelNames: ['method', 'route', 'status_code'],
 });
 
 const activeRequests = new client.Gauge({
@@ -18,7 +18,7 @@ const activeRequests = new client.Gauge({
 const aiServiceDuration = new client.Histogram({
   name: 'ai_service_duration_ms',
   help: 'Duration of external AI service API calls in ms',
-  labelNames: ['service']
+  labelNames: ['service'],
 });
 
 const aiTokenUsage = new client.Counter({
