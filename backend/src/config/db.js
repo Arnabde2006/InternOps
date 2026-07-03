@@ -3,9 +3,11 @@ const config = require('./index');
 
 const pool = new Pool({
   connectionString: config.databaseUrl,
-  max: 20,
+  max: config.dbPoolMax,
   idleTimeoutMillis: 30000,
 });
+
+
 
 pool.on('error', (err) => {
   console.error('DB pool error:', err);
