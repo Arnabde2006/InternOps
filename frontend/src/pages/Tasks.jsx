@@ -316,6 +316,7 @@ export default function Tasks() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
   const [notification, setNotification] = useState(null);
   const [draftFiles, setDraftFiles] = useState({
     taskId: null,
