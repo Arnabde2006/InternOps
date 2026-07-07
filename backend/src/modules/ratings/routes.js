@@ -61,8 +61,9 @@ module.exports = async function ratingsRoutes(fastify) {
         rated_user_id,
         `You received a new rating: ${score}/10.`
       ).catch(() => {});
-      await notifyUser(rating.rated_user_id, 'rating-received', { rating })
-        .catch(() => {});
+      await notifyUser(rating.rated_user_id, 'rating-received', {
+        rating,
+      }).catch(() => {});
 
       return reply.status(201).send(rating);
     }
