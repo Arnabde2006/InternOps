@@ -17,22 +17,53 @@ function getLogger() {
   };
 }
 
+function getSafeRedisError(err) {
+  return {
+    name: err?.name,
+    code: err?.code,
+    message: err?.message,
+  };
+}
+
+function buildRedisClientOptions() {
+  const redisConfig = config.redis;
+
+  if (!redisConfig?.enabled || !redisConfig.host || !redisConfig.password) {
+    return null;
+  }
+
+  return {
+    username: redisConfig.username || 'default',
+    password: redisConfig.password,
+    socket: {
+      host: redisConfig.host,
+      port: redisConfig.port || 6379,
+      tls: redisConfig.tls !== false,
+      connectTimeout: 1000,
+      reconnectStrategy: false,
+    },
+  };
+}
+
 async function getRedisClient() {
   if (process.env.NODE_ENV === 'test') return null;
-  if (!config.redisUrl) return null; // No URL -> no Redis
+
+  const redisOptions = buildRedisClientOptions();
+  if (!redisOptions) return null;
+
   if (client) return client;
   if (clientPromise) return clientPromise;
 
   clientPromise = (async () => {
     try {
-      const c = redis.createClient({
-        url: config.redisUrl,
-        socket: { connectTimeout: 1000, reconnectStrategy: false },
-      });
+      const c = redis.createClient(redisOptions);
 
       c.on('error', (err) => {
         const log = getLogger();
-        log.warn({ err, name: 'redis_error' }, 'Redis connection error');
+        log.warn(
+          { err: getSafeRedisError(err), name: 'redis_error' },
+          'Redis connection error'
+        );
       });
 
       c.on('disconnect', () => {
@@ -52,11 +83,15 @@ async function getRedisClient() {
       return client;
     } catch (err) {
       const log = getLogger();
-      log.warn('Redis unavailable – continuing without it');
+      log.warn(
+        { err: getSafeRedisError(err), name: 'redis_unavailable' },
+        'Redis unavailable - continuing without it'
+      );
+
       client = null;
-      // Do NOT reset clientPromise here — keep the settled-null promise so that
-      // every subsequent call short-circuits at `if (clientPromise) return clientPromise`
-      // and returns null immediately instead of retrying the failing DNS lookup.
+
+      // Do NOT reset clientPromise here. Keep the settled-null promise so each
+      // subsequent call returns null immediately instead of retrying repeatedly.
       return null;
     }
   })();
@@ -65,7 +100,10 @@ async function getRedisClient() {
 }
 
 function getRedisStatus() {
-  if (process.env.NODE_ENV === 'test' || !config.redisUrl) return 'disabled';
+  if (process.env.NODE_ENV === 'test' || !config.redis?.enabled) {
+    return 'disabled';
+  }
+
   return redisConnected ? 'connected' : 'disconnected';
 }
 
