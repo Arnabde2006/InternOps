@@ -37,6 +37,19 @@ export function useDeleteTemplate() {
   });
 }
 
+export function useDeleteCertificate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const { data } = await api.delete(`/certificates/${id}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certificates'] });
+    },
+  });
+}
+
 export function useCertificates(filters) {
   return useQuery({
     queryKey: ['certificates', filters],

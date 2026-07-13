@@ -1,20 +1,18 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
-  Trophy,
   Plus,
   Download,
   Trash2,
   Search,
-  Filter,
   X,
   Loader2,
   Award,
-  FileText,
-  Users,
 } from 'lucide-react';
 import {
   useCertificates,
   useGenerateCertificate,
+  useDeleteCertificate,
   useSeedTemplates,
   useTemplates,
 } from '../../hooks/useCertificates';
@@ -25,10 +23,10 @@ import {
   Spinner,
   Btn,
   Input,
-  Select,
   EmptyState,
   ConfirmationModal,
 } from '../../components/ui';
+import CustomSelect from '../../components/CustomSelect';
 
 const CERTIFICATE_TYPES = [
   { value: 'completion', label: 'Completion' },
@@ -55,13 +53,13 @@ export default function Certificates() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [certToDelete, setCertToDelete] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
 
   const { data: certsData, isLoading } = useCertificates({ search });
   const certificates = certsData?.data || [];
   const { data: templatesData, isLoading: templatesLoading } = useTemplates();
   const templates = templatesData?.data || [];
   const generateMutation = useGenerateCertificate();
+  const deleteMutation = useDeleteCertificate();
   const seedMutation = useSeedTemplates();
 
   const filteredCertificates = certificates.filter(
@@ -72,10 +70,10 @@ export default function Certificates() {
   );
 
   const handleDelete = (cert) => {
-    setDeletingId(cert.id);
-    // TODO: Add delete mutation to useCertificates hook
-    // deleteMutation.mutate(cert.id);
-    setCertToDelete(null);
+    deleteMutation.mutate(cert.id, {
+      onSuccess: () => setCertToDelete(null),
+      onError: () => setCertToDelete(null),
+    });
   };
 
   const handleDownload = (cert) => {
@@ -93,7 +91,7 @@ export default function Certificates() {
         message={`Are you sure you want to permanently delete the certificate for "${certToDelete?.recipient_name}"?`}
         onConfirm={() => handleDelete(certToDelete)}
         onCancel={() => setCertToDelete(null)}
-        loading={deletingId === certToDelete?.id}
+        loading={deleteMutation.isPending}
         danger={true}
       />
 
@@ -211,19 +209,24 @@ export default function Certificates() {
                           cert.status?.slice(1)}
                       </Badge>
                     </td>
+
                     <td className="p-4 text-slate-500 dark:text-slate-400">
                       {new Date(cert.created_at).toLocaleDateString()}
                     </td>
+
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
+                          type="button"
                           onClick={() => handleDownload(cert)}
                           className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-colors"
                           title="Download"
                         >
                           <Download className="w-4 h-4" />
                         </button>
+
                         <button
+                          type="button"
                           onClick={() => setCertToDelete(cert)}
                           className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
                           title="Delete"
@@ -271,13 +274,31 @@ function GenerateCertificateModal({
     template_id: '',
   });
 
+  const templateOptions = [
+    {
+      value: '',
+      label: templatesLoading
+        ? 'Loading templates...'
+        : 'Select a template (optional)',
+    },
+    ...templates.map((template) => ({
+      value: template.id,
+      label: template.name,
+    })),
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     generateMutation.mutate(formData, {
       onSuccess: () => {
         onClose();
@@ -296,15 +317,16 @@ function GenerateCertificateModal({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between">
+  return createPortal(
+    <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-lg max-h-[90vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col">
+        <div className="shrink-0 p-6 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-lg">
                 <Award className="w-5 h-5" />
               </div>
+
               <div>
                 <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
                   Generate Certificate
@@ -314,7 +336,9 @@ function GenerateCertificateModal({
                 </p>
               </div>
             </div>
+
             <button
+              type="button"
               onClick={onClose}
               className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
@@ -323,119 +347,125 @@ function GenerateCertificateModal({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="min-h-0 flex flex-col">
+          <div className="min-h-0 overflow-y-auto p-6 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Recipient Name *
+                </label>
+                <Input
+                  name="recipient_name"
+                  value={formData.recipient_name}
+                  onChange={handleChange}
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Recipient Email *
+                </label>
+                <Input
+                  name="recipient_email"
+                  type="email"
+                  value={formData.recipient_email}
+                  onChange={handleChange}
+                  placeholder="john@example.com"
+                  required
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Recipient Name *
+                Certificate Title *
               </label>
               <Input
-                name="recipient_name"
-                value={formData.recipient_name}
+                name="title"
+                value={formData.title}
                 onChange={handleChange}
-                placeholder="John Doe"
+                placeholder="Certificate of Achievement"
                 required
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Recipient Email *
+                Body / Description
               </label>
-              <Input
-                name="recipient_email"
-                type="email"
-                value={formData.recipient_email}
+              <textarea
+                name="body"
+                value={formData.body}
                 onChange={handleChange}
-                placeholder="john@example.com"
-                required
+                placeholder="This certificate is awarded to..."
+                rows={3}
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400 outline-none transition resize-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Issuer
+                </label>
+                <Input
+                  name="issuer"
+                  value={formData.issuer}
+                  onChange={handleChange}
+                  placeholder="Organization Name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Certificate Type
+                </label>
+                <CustomSelect
+                  value={formData.certificate_type}
+                  onChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      certificate_type: value,
+                    }))
+                  }
+                  options={CERTIFICATE_TYPES}
+                  placeholder="Select certificate type"
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Template
+              </label>
+              <CustomSelect
+                value={formData.template_id}
+                onChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    template_id: value,
+                  }))
+                }
+                options={templateOptions}
+                placeholder={
+                  templatesLoading
+                    ? 'Loading templates...'
+                    : 'Select a template (optional)'
+                }
+                disabled={templatesLoading}
+                className="w-full"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Certificate Title *
-            </label>
-            <Input
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="Certificate of Achievement"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Body / Description
-            </label>
-            <textarea
-              name="body"
-              value={formData.body}
-              onChange={handleChange}
-              placeholder="This certificate is awarded to..."
-              rows={3}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400 outline-none transition resize-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Issuer
-              </label>
-              <Input
-                name="issuer"
-                value={formData.issuer}
-                onChange={handleChange}
-                placeholder="Organization Name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Certificate Type
-              </label>
-              <Select
-                name="certificate_type"
-                value={formData.certificate_type}
-                onChange={handleChange}
-              >
-                {CERTIFICATE_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Template
-            </label>
-            <Select
-              name="template_id"
-              value={formData.template_id}
-              onChange={handleChange}
-              disabled={templatesLoading}
-            >
-              <option value="">
-                {templatesLoading
-                  ? 'Loading templates...'
-                  : 'Select a template (optional)'}
-              </option>
-              {templates.map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+          <div className="shrink-0 flex justify-end gap-3 p-6 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
             <Btn type="button" variant="outline" onClick={onClose}>
               Cancel
             </Btn>
+
             <Btn
               type="submit"
               disabled={
@@ -454,6 +484,7 @@ function GenerateCertificateModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
