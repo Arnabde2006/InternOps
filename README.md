@@ -107,14 +107,13 @@ cd InternOps
 
 ## Environment Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| PORT | Backend server port | 5001 |
-| NODE_ENV | Application environment | development |
-| DATABASE_URL | PostgreSQL database connection string | postgresql://user:password@localhost:5432/internops |
-| JWT_SECRET | Secret key for JWT access tokens | your-jwt-secret |
-| JWT_REFRESH_SECRET | Secret key for JWT refresh tokens | your-refresh-secret |
-
+| Variable           | Description                           | Example                                             |
+| ------------------ | ------------------------------------- | --------------------------------------------------- |
+| PORT               | Backend server port                   | 5001                                                |
+| NODE_ENV           | Application environment               | development                                         |
+| DATABASE_URL       | PostgreSQL database connection string | postgresql://user:password@localhost:5432/internops |
+| JWT_SECRET         | Secret key for JWT access tokens      | your-jwt-secret                                     |
+| JWT_REFRESH_SECRET | Secret key for JWT refresh tokens     | your-refresh-secret                                 |
 
 ### Complete Environment Variables
 
@@ -128,19 +127,17 @@ The file is organized into the following sections:
 
 - Core App Config
 - Seed Admin Credentials
-- Authentication 
+- Authentication
 - Database (PostgreSQL)
 - Google OAuth
 - Fast2SMS
-- AI Services  
+- AI Services
 - Email (SMTP)
 - Redis (Upstash)
 - AI Cache
 - AI Chat Daily Limit
 
 Copy `backend/.env.example` to `.env` and replace the example values with your own credentials before starting the application.
-
-
 
 ### 2. Setup Backend
 
@@ -215,7 +212,6 @@ InternOps/
 | `npm run preview` | Preview the production build |
 
 ---
-
 
 ## Troubleshooting
 
