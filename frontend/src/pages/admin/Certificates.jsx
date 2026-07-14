@@ -78,7 +78,7 @@ export default function Certificates() {
 
   const handleDownload = (cert) => {
     window.open(
-      cert.download_url || `/api/certificates/${cert.id}/download`,
+      cert.download_url || `/api/v1/certificates/${cert.id}/download`,
       '_blank'
     );
   };

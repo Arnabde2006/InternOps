@@ -167,7 +167,17 @@ if (process.env.NODE_ENV !== 'test') {
       info: {
         title: 'InternOps API',
         version: '1.0.0',
+        description:
+          'All business routes are versioned under /api/v1/. Future breaking changes will be introduced under /api/v2/ alongside the existing version.',
       },
+      servers: [
+        { url: '/api/v1', description: 'Current stable API (v1)' },
+        {
+          url: '/api/v2',
+          description:
+            'Next API version (v2) — see CONTRIBUTING.md for migration guide',
+        },
+      ],
     },
   });
 
@@ -177,7 +187,12 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // ---- API routes (delegated to dedicated router factory) ----
-app.register(require('./routes'), { prefix: '/api' });
+// v1 — stable; all existing clients target this prefix.
+app.register(require('./routes'), { prefix: '/api/v1' });
+// v2 — introduced alongside v1 so both are served concurrently.
+// Breaking changes land here; v1 receives Deprecation+Sunset headers
+// via the onSend hook in routes.js once V1_DEPRECATED=true is set.
+app.register(require('./routes.v2'), { prefix: '/api/v2' });
 
 app.get('/', async (req, reply) => {
   reply.redirect('/docs');
