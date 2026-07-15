@@ -38,6 +38,7 @@ const MIGRATION_RENAMES = {
   '019_proof_images.sql': '022_proof_images.sql',
   '020_social_tasks_reminder_sent_at.sql':
     '023_social_tasks_reminder_sent_at.sql',
+  '026_feature_flags.sql': '027_feature_flags.sql',
 };
 
 const fsPromises = fs.promises;
