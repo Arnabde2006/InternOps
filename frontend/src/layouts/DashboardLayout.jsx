@@ -159,7 +159,7 @@ export default function DashboardLayout() {
   }, [accessToken]);
 
   const role = user?.role;
-  const SIDEBAR_KEY = `sidebar_scroll_${window.location.pathname}`;
+  const SIDEBAR_KEY = 'sidebar_scroll';
   const sidebarNavRef = useRef(null);
 
   const [collapsed, setCollapsed] = useState(

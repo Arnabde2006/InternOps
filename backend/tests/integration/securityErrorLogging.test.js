@@ -65,7 +65,7 @@ describe('Security Error Logging (#1012)', () => {
     const { generateToken } = require('../../src/middleware/csrf');
     const request = {
       method: 'GET',
-      url: '/api/auth/csrf',
+      url: '/api/v1/auth/csrf',
       headers: {
         authorization: 'Bearer malformed.jwt.token',
       },
@@ -81,7 +81,7 @@ describe('Security Error Logging (#1012)', () => {
     expect(request.log.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'GET',
-        url: '/api/auth/csrf',
+        url: '/api/v1/auth/csrf',
         hasAuthHeader: true,
         tokenLength: 'malformed.jwt.token'.length,
       }),
@@ -108,7 +108,7 @@ describe('Security Error Logging (#1012)', () => {
     )[1];
     const request = {
       method: 'POST',
-      url: '/api/users/me',
+      url: '/api/v1/users/me',
       headers: {
         cookie: `csrf-sid=${encodeURIComponent(sessionCookie)}`,
         'x-csrf-token': _internal.tokenFor('session-123'),
@@ -127,7 +127,7 @@ describe('Security Error Logging (#1012)', () => {
     expect(request.log.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'POST',
-        url: '/api/users/me',
+        url: '/api/v1/users/me',
         hasAuthHeader: true,
         tokenLength: 'bad.jwt.token'.length,
       }),
