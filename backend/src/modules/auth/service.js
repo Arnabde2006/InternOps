@@ -141,15 +141,27 @@ async function refreshTokens(token, ip) {
     throw new UnauthorizedError('Token revoked/expired');
   }
 
-  const user = await repo.findById(decoded.id);
+  // Ensure the claimed token belongs to the same user identified by the
+  // signed refresh token payload.
+  if (String(claimedUserId) !== String(decoded.id)) {
+    await repo.revokeAllUserTokensRedis(claimedUserId);
+    throw new UnauthorizedError('Invalid refresh token');
+  }
+
+  const user = await repo.findById(claimedUserId);
 
   if (!user || user.suspended) {
+    await repo.revokeAllUserTokensRedis(claimedUserId);
     throw new UnauthorizedError('User not found/suspended');
   }
 
   const newAccess = generateAccessToken(user);
   const newRefresh = generateRefreshToken(user);
   const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  // Revoke every existing refresh token for this user before storing the
+  // replacement. This prevents stolen sibling tokens from remaining usable.
+  await repo.revokeAllUserTokensRedis(user.id);
 
   await repo.storeRefreshTokenRedis(user.id, hashToken(newRefresh), newExpiry);
 
