@@ -159,4 +159,9 @@ module.exports = {
     rateLimitWindowMs: parseInt(process.env.EMAIL_RATE_WINDOW, 10) || 60000,
     bounceCheckEnabled: process.env.EMAIL_BOUNCE_CHECK === 'true',
   },
+  websocket: {
+    maxUnauthenticatedConnections:
+      parseInt(process.env.MAX_UNAUTHENTICATED_WEBSOCKET_CONNECTIONS, 10) || 20,
+    authTimeoutMs: parseInt(process.env.WEBSOCKET_AUTH_TIMEOUT_MS, 10) || 5000,
+  },
 };
