@@ -19,6 +19,7 @@ import {
   useTemplates,
   useCreateTemplate,
   useDeleteTemplate,
+  useSeedTemplates,
 } from '../../hooks/useCertificates';
 
 export default function CanvaTemplates() {
@@ -64,6 +65,7 @@ export default function CanvaTemplates() {
   const importMutation = useCanvaImport();
   const createMutation = useCreateTemplate();
   const deleteMutation = useDeleteTemplate();
+  const seedMutation = useSeedTemplates();
 
   const isConnected = canvaStatus?.connected;
 
@@ -111,7 +113,7 @@ export default function CanvaTemplates() {
 
   const handleSeedDefaults = async () => {
     try {
-      await createMutation.mutateAsync({ seed: true });
+      await seedMutation.mutateAsync();
       refetchTemplates();
     } catch (error) {
       console.error('Failed to seed templates:', error);
@@ -283,11 +285,17 @@ export default function CanvaTemplates() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleSeedDefaults}
-                disabled={createMutation.isPending}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                disabled={seedMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Palette className="w-4 h-4" />
-                Seed Default Templates
+                {seedMutation.isPending ? (
+                  <Spinner size="sm" />
+                ) : (
+                  <Palette className="w-4 h-4" />
+                )}
+                {seedMutation.isPending
+                  ? 'Seeding Templates...'
+                  : 'Seed Default Templates'}
               </button>
               <button
                 onClick={() => setShowCreateModal(true)}
