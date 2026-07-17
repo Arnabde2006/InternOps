@@ -237,17 +237,16 @@ export default function Tasks() {
       );
       files = files.slice(0, 5); // Take max 5 files
     }
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+    const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
     for (const file of files) {
       if (!file.type.startsWith('image/')) {
         showNotification('Only image files are allowed.');
         return;
       }
       if (file.size > MAX_BYTES) {
-    showNotification('File too large — max 5MB');
-    return;
-}
-      
+        showNotification('File too large — max 5MB');
+        return;
+      }
     }
 
     const previews = files.map((f) => URL.createObjectURL(f));
