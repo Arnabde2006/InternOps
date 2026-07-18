@@ -21,6 +21,7 @@ import {
   useDeleteTemplate,
   useSeedTemplates,
 } from '../../hooks/useCertificates';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 export default function CanvaTemplates() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -37,14 +38,7 @@ export default function CanvaTemplates() {
     return () => document.removeEventListener('keydown', handleKey);
   }, [showCreateModal]);
 
-  useEffect(() => {
-    if (!showCreateModal) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = original;
-    };
-  }, [showCreateModal]);
+  useBodyScrollLock(showCreateModal);
 
   const { data: canvaStatusResp, isLoading: statusLoading } = useCanvaStatus();
   const canvaStatus = canvaStatusResp?.data || {};
