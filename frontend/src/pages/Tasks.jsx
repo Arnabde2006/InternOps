@@ -796,13 +796,13 @@ export default function Tasks() {
                         }
                       />
                       <div className="flex items-center gap-2">
-                        <Btn
-                          variant="outline"
-                          className="rounded-2xl py-1.5 text-sm"
+                        <button
+                          type="button"
+                          className="px-2 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                           onClick={() => setEditingTask(null)}
                         >
                           Cancel
-                        </Btn>
+                        </button>
                         <Btn
                           variant="primary"
                           className="rounded-2xl py-1.5 text-sm"
@@ -1010,7 +1010,9 @@ export default function Tasks() {
                                       .replace(/\\/g, '/')
                                       .replace(/^\/+/, '');
                                     const base = (
-                                      import.meta.env.VITE_API_BASE_URL || ''
+                                      import.meta.env.VITE_API_URL ||
+                                      import.meta.env.VITE_API_BASE_URL ||
+                                      ''
                                     ).replace(/\/+$/, '');
                                     const src = base
                                       ? `${base}/${normalized}`

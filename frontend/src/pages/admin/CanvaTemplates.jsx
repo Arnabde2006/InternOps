@@ -81,7 +81,19 @@ export default function CanvaTemplates() {
   const handleCreateTemplate = async (e) => {
     e.preventDefault();
     try {
-      await createMutation.mutateAsync(newTemplate);
+      const payload = {
+        name: newTemplate.name,
+        description: newTemplate.description,
+        template_data: {
+          background: newTemplate.colorScheme[0] || '#3B82F6',
+          accent: newTemplate.colorScheme[1] || '#10B981',
+          text: newTemplate.colorScheme[2] || '#F59E0B',
+          // If you want to keep the full array for other uses, add:
+          // colors: newTemplate.colorScheme
+        },
+        // thumbnail_url and canva_design_id are not used for manual creation
+      };
+      await createMutation.mutateAsync(payload);
       setShowCreateModal(false);
       setNewTemplate({
         name: '',
@@ -339,13 +351,25 @@ export default function CanvaTemplates() {
 
                     {/* Color Scheme Preview */}
                     <div className="flex items-center gap-1">
-                      {template.colorScheme?.slice(0, 5).map((color, index) => (
-                        <div
-                          key={index}
-                          className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-900 shadow-sm"
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
+                      {(() => {
+                        const colors = template.template_data
+                          ? [
+                              template.template_data.background,
+                              template.template_data.accent,
+                              template.template_data.text,
+                            ].filter(Boolean)
+                          : [];
+                        if (colors.length === 0) return null;
+                        return colors
+                          .slice(0, 5)
+                          .map((color, index) => (
+                            <div
+                              key={index}
+                              className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-900 shadow-sm"
+                              style={{ backgroundColor: color }}
+                            />
+                          ));
+                      })()}
                       {template.colorScheme?.length > 5 && (
                         <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
                           +{template.colorScheme.length - 5}
