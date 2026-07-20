@@ -71,9 +71,10 @@ export function UserAvatar({
   );
 }
 
-export function Card({ children, className = '', hover = false }) {
+export function Card({ children, className = '', hover = false, ...props }) {
   return (
     <div
+      {...props}
       className={`relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.06)] dark:shadow-none text-slate-900 dark:text-white ${
         hover ? 'card-hover cursor-pointer' : ''
       } ${className}`}

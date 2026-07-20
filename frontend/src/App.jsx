@@ -36,6 +36,8 @@ const CanvaTemplates = lazy(() => import('./pages/admin/CanvaTemplates'));
 const AICertificates = lazy(() => import('./pages/admin/AICertificates'));
 const QuickGenerate = lazy(() => import('./pages/admin/QuickGenerate'));
 const FeatureFlags = lazy(() => import('./pages/admin/FeatureFlags'));
+const ProjectsPage = lazy(() => import('./pages/admin/ProjectsPage'));
+const ProjectDetailPage = lazy(() => import('./pages/admin/ProjectDetailPage'));
 
 function PageLoader() {
   return (
@@ -269,6 +271,22 @@ export default function App() {
               element={
                 <RoleGuard allowedRoles={['ADMIN']}>
                   <Departments />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="departments/:deptId/projects"
+              element={
+                <RoleGuard allowedRoles={['ADMIN']}>
+                  <ProjectsPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="departments/:deptId/projects/:leadId"
+              element={
+                <RoleGuard allowedRoles={['ADMIN']}>
+                  <ProjectDetailPage />
                 </RoleGuard>
               }
             />
