@@ -200,7 +200,6 @@ if (process.env.NODE_ENV !== 'test') {
   });
 
   const authMiddleware = require('./middleware/auth');
-  const rbac = require('./middleware/rbac');
 
   app.register(require('@fastify/swagger-ui'), {
     routePrefix: '/api-docs',
