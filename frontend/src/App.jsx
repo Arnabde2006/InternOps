@@ -273,6 +273,62 @@ export default function App() {
               }
             />
             <Route
+              path="admin/departments"
+              element={
+                <RoleGuard allowedRoles={['ADMIN']}>
+                  <Departments />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="admin/departments/:deptId/attendance"
+              element={
+                <RoleGuard allowedRoles={['ADMIN']}>
+                  <Attendance />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="admin/departments/:deptId/ratings"
+              element={
+                <RoleGuard allowedRoles={['ADMIN']}>
+                  <Ratings />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="admin/departments/:deptId/tasks"
+              element={
+                <RoleGuard allowedRoles={['ADMIN']}>
+                  <Tasks />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="departments/:deptId/attendance"
+              element={
+                <RoleGuard allowedRoles={['ADMIN']}>
+                  <Attendance />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="departments/:deptId/ratings"
+              element={
+                <RoleGuard allowedRoles={['ADMIN']}>
+                  <Ratings />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="departments/:deptId/tasks"
+              element={
+                <RoleGuard allowedRoles={['ADMIN']}>
+                  <Tasks />
+                </RoleGuard>
+              }
+            />
+            <Route
               path="audit"
               element={
                 <RoleGuard allowedRoles={['ADMIN']}>

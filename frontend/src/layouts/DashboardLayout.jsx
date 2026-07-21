@@ -314,9 +314,65 @@ export default function DashboardLayout() {
               {collapsed && (
                 <div className="my-3 mx-3 border-t border-white/10" />
               )}
-              {visibleAdminNav.map((n) => (
-                <NavLink key={n.path} n={n} />
-              ))}
+              {visibleAdminNav.map((n) => {
+                const isDeptNav = n.path === '/departments';
+                const deptMatch = loc.pathname.match(/\/(?:admin\/)?departments\/([^/]+)/);
+                const activeDeptId = deptMatch ? deptMatch[1] : null;
+
+                return (
+                  <div key={n.path} className="space-y-1">
+                    <NavLink n={n} />
+                    {isDeptNav && activeDeptId && (
+                      <div className={`space-y-1 ${collapsed ? 'pl-0' : 'pl-4'} animate-fade-in`}>
+                        <Link
+                          to={`/admin/departments/${activeDeptId}/attendance`}
+                          className={`flex items-center gap-2 rounded-xl text-xs font-bold transition-all py-2 ${
+                            collapsed ? 'justify-center px-0' : 'px-3'
+                          } ${
+                            loc.pathname.includes('/attendance')
+                              ? 'bg-white/20 text-white shadow-sm'
+                              : 'text-indigo-200/80 hover:bg-white/10 hover:text-white'
+                          }`}
+                          title="Department Attendance"
+                        >
+                          <CalendarCheck className="w-4 h-4 shrink-0" />
+                          {!collapsed && <span>Attendance</span>}
+                        </Link>
+
+                        <Link
+                          to={`/admin/departments/${activeDeptId}/ratings`}
+                          className={`flex items-center gap-2 rounded-xl text-xs font-bold transition-all py-2 ${
+                            collapsed ? 'justify-center px-0' : 'px-3'
+                          } ${
+                            loc.pathname.includes('/ratings')
+                              ? 'bg-white/20 text-white shadow-sm'
+                              : 'text-indigo-200/80 hover:bg-white/10 hover:text-white'
+                          }`}
+                          title="Department Ratings"
+                        >
+                          <Star className="w-4 h-4 shrink-0" />
+                          {!collapsed && <span>Ratings</span>}
+                        </Link>
+
+                        <Link
+                          to={`/admin/departments/${activeDeptId}/tasks`}
+                          className={`flex items-center gap-2 rounded-xl text-xs font-bold transition-all py-2 ${
+                            collapsed ? 'justify-center px-0' : 'px-3'
+                          } ${
+                            loc.pathname.includes('/tasks')
+                              ? 'bg-white/20 text-white shadow-sm'
+                              : 'text-indigo-200/80 hover:bg-white/10 hover:text-white'
+                          }`}
+                          title="Department Tasks"
+                        >
+                          <Target className="w-4 h-4 shrink-0" />
+                          {!collapsed && <span>Tasks</span>}
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </>
           )}
         </nav>

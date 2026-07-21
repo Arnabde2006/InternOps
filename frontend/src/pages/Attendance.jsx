@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { CalendarCheck } from 'lucide-react';
+import { CalendarCheck, Building2, Star, Target } from 'lucide-react';
 import api from '../lib/axios';
 import useAuthStore from '../store/auth';
 import AttendanceMarkForm from '../components/AttendanceMarkForm';
@@ -18,9 +19,11 @@ const STATUS_BADGE = {
 };
 
 export default function Attendance() {
+  const { deptId } = useParams();
   const user = useAuthStore((s) => s.user);
   const canMark = ['CAPTAIN', 'TL', 'SENIOR_TL', 'ADMIN'].includes(user?.role);
   const isManager = canMark;
+  const isAdmin = user?.role === 'ADMIN';
 
   const [viewUserId, setViewUserId] = useState(user?.id || '');
   const [page, setPage] = useState(1);
@@ -32,6 +35,15 @@ export default function Attendance() {
     setPage(1);
   };
 
+  // Fetch departments if user is Admin
+  const { data: departments = [] } = useQuery({
+    queryKey: ['departments'],
+    queryFn: () => api.get('/departments').then((res) => res.data),
+    enabled: isAdmin,
+  });
+
+  const activeDepartment = departments.find((d) => d.id === deptId);
+
   // Managers can pick any team member; everyone can always see their own.
   const {
     data: team = [],
@@ -39,9 +51,13 @@ export default function Attendance() {
     error: teamError,
     refetch: refetchTeam,
   } = useQuery({
-    queryKey: ['authorizedMembers'],
+    queryKey: ['authorizedMembers', deptId],
     queryFn: () =>
-      api.get('/attendance/authorized-members').then((res) => res.data),
+      api
+        .get('/attendance/authorized-members', {
+          params: { department_id: deptId },
+        })
+        .then((res) => res.data),
     enabled: isManager,
   });
 
@@ -81,6 +97,57 @@ export default function Attendance() {
 
   return (
     <div className="animate-fade-in-up">
+      {/* Admin Department Navigation Context Banner */}
+      {isAdmin && deptId && (
+        <div className="mb-6 p-4 rounded-3xl bg-gradient-to-r from-slate-900 to-indigo-950 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-indigo-500/20 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase font-extrabold tracking-wider text-indigo-300">
+                  Department Context
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/30 text-indigo-200">
+                  Admin Scope
+                </span>
+              </div>
+              <h2 className="text-lg font-extrabold text-white">
+                {activeDepartment?.name || 'Department View'}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+            <Link
+              to={`/admin/departments/${deptId}/attendance`}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-white shadow-sm"
+            >
+              Attendance
+            </Link>
+            <Link
+              to={`/admin/departments/${deptId}/ratings`}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-indigo-100 transition"
+            >
+              Ratings
+            </Link>
+            <Link
+              to={`/admin/departments/${deptId}/tasks`}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-indigo-100 transition"
+            >
+              Tasks
+            </Link>
+            <Link
+              to="/admin/departments"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-indigo-200 transition ml-auto md:ml-2"
+            >
+              Change Department
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Professional Header Block */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
         <div className="flex items-center gap-4">

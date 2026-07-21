@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Star, History } from 'lucide-react';
+import { Star, History, Building2, CalendarCheck, Target } from 'lucide-react';
 import api from '../lib/axios';
 import useAuthStore from '../store/auth';
 import RatingForm from '../components/RatingForm';
@@ -43,6 +44,7 @@ function Stars({ value }) {
 }
 
 export default function Ratings() {
+  const { deptId } = useParams();
   const user = useAuthStore((s) => s.user);
   const canRate = ['ADMIN', 'CAPTAIN', 'TL', 'SENIOR_TL'].includes(user?.role);
   const isManager = ['CAPTAIN', 'TL', 'SENIOR_TL', 'ADMIN'].includes(
@@ -50,8 +52,15 @@ export default function Ratings() {
   );
   const isAdmin = user?.role === 'ADMIN';
 
-  const [viewDepartmentId, setViewDepartmentId] = useState('');
-  const [viewUserId, setViewUserId] = useState(user?.id || '');
+  const [viewDepartmentId, setViewDepartmentId] = useState(deptId || '');
+  const [viewUserId, setViewUserId] = useState(deptId ? '' : user?.id || '');
+
+  useEffect(() => {
+    if (deptId) {
+      setViewDepartmentId(deptId);
+      setViewUserId('');
+    }
+  }, [deptId]);
 
   useEffect(() => {
     if (user?.id && !viewUserId) setViewUserId(user.id);
@@ -119,8 +128,61 @@ export default function Ratings() {
       })),
   ];
 
+  const activeDepartment = departments.find((d) => d.id === (deptId || viewDepartmentId));
+
   return (
     <div className="animate-fade-in-up">
+      {/* Admin Department Navigation Context Banner */}
+      {isAdmin && (deptId || viewDepartmentId) && (
+        <div className="mb-6 p-4 rounded-3xl bg-gradient-to-r from-slate-900 to-indigo-950 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-indigo-500/20 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase font-extrabold tracking-wider text-indigo-300">
+                  Department Context
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/30 text-indigo-200">
+                  Admin Scope
+                </span>
+              </div>
+              <h2 className="text-lg font-extrabold text-white">
+                {activeDepartment?.name || 'Department View'}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+            <Link
+              to={deptId ? `/admin/departments/${deptId}/attendance` : '/attendance'}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-indigo-100 transition"
+            >
+              Attendance
+            </Link>
+            <Link
+              to={deptId ? `/admin/departments/${deptId}/ratings` : '/ratings'}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-white shadow-sm"
+            >
+              Ratings
+            </Link>
+            <Link
+              to={deptId ? `/admin/departments/${deptId}/tasks` : '/tasks'}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-indigo-100 transition"
+            >
+              Tasks
+            </Link>
+            <Link
+              to="/admin/departments"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-indigo-200 transition ml-auto md:ml-2"
+            >
+              Change Department
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Professional Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
         <div className="flex items-center gap-4">

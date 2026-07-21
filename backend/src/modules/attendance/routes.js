@@ -256,8 +256,16 @@ async function routes(fastify) {
     },
     async (req) => {
       if (req.user.role === 'ADMIN') {
+        const department_id = req.query?.department_id;
+        if (department_id) {
+          const res = await pool.query(
+            'SELECT id, full_name, email, role, department_id FROM users WHERE deleted_at IS NULL AND department_id = $1',
+            [department_id]
+          );
+          return res.rows;
+        }
         const all = await pool.query(
-          'SELECT id, full_name, email, role FROM users WHERE deleted_at IS NULL'
+          'SELECT id, full_name, email, role, department_id FROM users WHERE deleted_at IS NULL'
         );
         return all.rows;
       }
