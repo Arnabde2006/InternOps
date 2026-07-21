@@ -1,6 +1,8 @@
 require('dotenv').config();
 const validateEnv = require('./config/validateEnv');
 validateEnv();
+const auth = require('./middleware/auth');
+const rbac = require('./middleware/rbac');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const Fastify = require('fastify');
@@ -29,13 +31,13 @@ const app = Fastify({
 app.get(
   '/metrics',
   {
+    preHandler: [auth, rbac('ADMIN')],
     config: {
       rateLimit: false,
     },
   },
   metrics.metricsEndpoint
 );
-
 app.get(
   '/health',
   {
