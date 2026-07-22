@@ -312,7 +312,7 @@ function TaskCard({
   );
 }
 
-export default function Tasks() {
+export default function Tasks({ isProjectView = false, roster = [] } = {}) {
   const { user } = useAuthStore();
   const [page, setPage] = useState(1);
   const LIMIT = 10;
@@ -369,6 +369,11 @@ export default function Tasks() {
       api.get(`/proofs/task/${selectedProofTaskId}`).then((res) => res.data),
     enabled: !!selectedProofTaskId,
   });
+
+  const effectiveProofs =
+    proofs && roster.length > 0
+      ? proofs.filter((p) => roster.some((m) => m.id === p.intern_id))
+      : proofs;
 
   const { data: myProofs } = useQuery({
     queryKey: ['myProofs'],
@@ -553,36 +558,48 @@ export default function Tasks() {
         </div>
       )}
 
-      {/* Professional Header Block */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-900/60 text-violet-600 dark:text-violet-300 flex items-center justify-center shadow-sm">
-            <Target className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">
-              Social Media Tasks
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              Campaigns & proof verification
-            </p>
-          </div>
+      {isProjectView ? (
+        <div className="flex justify-between items-center mb-5">
+          <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
+            Project Tasks
+          </h3>
+          {canCreateTask && (
+            <Btn onClick={() => setShowForm((s) => !s)}>
+              {showForm ? 'Cancel' : 'Create Task'}
+            </Btn>
+          )}
         </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-900/60 text-violet-600 dark:text-violet-300 flex items-center justify-center shadow-sm">
+              <Target className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">
+                Social Media Tasks
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Campaigns & proof verification
+              </p>
+            </div>
+          </div>
 
-        {canCreateTask && (
-          <Btn onClick={() => setShowForm((s) => !s)}>
-            {showForm ? (
-              <span className="flex items-center gap-1">
-                <X className="w-4 h-4" /> Cancel
-              </span>
-            ) : (
-              <span className="flex items-center gap-1">
-                <Plus className="w-4 h-4" /> Create task
-              </span>
-            )}
-          </Btn>
-        )}
-      </div>
+          {canCreateTask && (
+            <Btn onClick={() => setShowForm((s) => !s)}>
+              {showForm ? (
+                <span className="flex items-center gap-1">
+                  <X className="w-4 h-4" /> Cancel
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <Plus className="w-4 h-4" /> Create task
+                </span>
+              )}
+            </Btn>
+          )}
+        </div>
+      )}
 
       {showForm && canCreateTask && (
         <div className="mb-5 animate-fade-in-up">
@@ -976,19 +993,19 @@ export default function Tasks() {
                         </h4>
 
                         <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {proofs?.length || 0} submission
-                          {proofs?.length === 1 ? '' : 's'}
+                          {effectiveProofs?.length || 0} submission
+                          {effectiveProofs?.length === 1 ? '' : 's'}
                         </span>
                       </div>
 
-                      {!proofs?.length ? (
+                      {!effectiveProofs?.length ? (
                         <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 p-4">
                           <p className="text-xs text-slate-500 dark:text-slate-400">
                             No submissions yet.
                           </p>
                         </div>
                       ) : (
-                        proofs.map((p) => (
+                        effectiveProofs.map((p) => (
                           <div
                             key={p.id}
                             className="flex flex-col md:flex-row items-start md:items-center gap-3 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 w-full"

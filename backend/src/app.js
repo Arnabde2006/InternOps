@@ -1,6 +1,8 @@
 require('dotenv').config();
 const validateEnv = require('./config/validateEnv');
 validateEnv();
+const auth = require('./middleware/auth');
+const rbac = require('./middleware/rbac');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const Fastify = require('fastify');
@@ -11,7 +13,6 @@ const { initializeWebSocket, getIO } = require('./websocket');
 const noticesRoutes = require('./modules/notices/routes');
 const { getRedisStatus } = require('./config/redis');
 const authenticate = require('./middleware/auth');
-const rbac = require('./middleware/rbac');
 const { csrfMiddleware } = require('./middleware/csrf');
 const { sanitizationMiddleware } = require('./middleware/sanitize');
 const { createAuditLog } = require('./utils/audit');
@@ -31,6 +32,7 @@ const app = Fastify({
 app.get(
   '/metrics',
   {
+    preHandler: [auth, rbac('ADMIN')],
     config: {
       rateLimit: false,
     },
@@ -197,7 +199,6 @@ if (process.env.NODE_ENV !== 'test') {
   });
 
   const authMiddleware = require('./middleware/auth');
-  const rbac = require('./middleware/rbac');
 
   app.register(require('@fastify/swagger-ui'), {
     routePrefix: '/api-docs',

@@ -50,10 +50,20 @@ const nav = [
     icon: Users,
     allowedRoles: MANAGER_ROLES,
   },
-  { path: '/attendance', label: 'Attendance', icon: CalendarCheck },
-  { path: '/ratings', label: 'Ratings', icon: Star },
-  { path: '/tasks', label: 'Tasks', icon: Target },
-  { path: '/meetings', label: 'Meetings', icon: Video },
+  {
+    path: '/attendance',
+    label: 'Attendance',
+    icon: CalendarCheck,
+    excludeRoles: ['ADMIN'],
+  },
+  { path: '/ratings', label: 'Ratings', icon: Star, excludeRoles: ['ADMIN'] },
+  { path: '/tasks', label: 'Tasks', icon: Target, excludeRoles: ['ADMIN'] },
+  {
+    path: '/meetings',
+    label: 'Meetings',
+    icon: Video,
+    excludeRoles: ['ADMIN'],
+  },
   { path: '/notifications', label: 'Notifications', icon: Bell },
   { path: '/profile', label: 'Profile', icon: User },
   { path: '/sessions', label: 'Sessions', icon: Shield },
@@ -153,6 +163,9 @@ const FULL_LOGO_SRC = '/UptoSkills.webp';
 const MINI_LOGO_SRC = '/Uptoskills_log_fevicon.png';
 
 function canShowNavItem(item, role, flags) {
+  if (item.excludeRoles && item.excludeRoles.includes(role)) {
+    return false;
+  }
   if (!item.allowedRoles) {
     if (item.featureFlag) return flags[item.featureFlag] === true;
     return true;
