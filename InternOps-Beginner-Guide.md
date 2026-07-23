@@ -6,6 +6,8 @@ This guide assumes you have **never used Git, GitHub, or Node.js before**. Follo
 
 ---
 
+---
+
 ## Table of Contents
 
 1. [What You're Working With](#1-what-youre-working-with)
@@ -75,7 +77,7 @@ Open a terminal:
 
 Type:
 
-```powershell
+```bash
 node -v
 npm -v
 ```
@@ -107,7 +109,7 @@ If Git isn't installed, macOS will prompt you to install "Command Line Developer
 
 In your terminal (PowerShell on Windows, Terminal on macOS):
 
-```powershell
+```bash
 git --version
 ```
 
@@ -120,7 +122,6 @@ You should see something like `git version 2.44.0`.
 1. Go to https://github.com/signup
 2. Enter your email, create a password, and pick a username (this username will be publicly visible — pick something professional, e.g. your real name or a variant of it).
 3. Verify your email via the link GitHub sends you.
-4. Once logged in, ask your team lead / project maintainer to **add you as a collaborator** on `rajat-wyrm/InternOps` (unless you're already added), or confirm whether the team uses a **fork-based workflow** (explained in Section 15).
 
 ---
 
@@ -130,14 +131,14 @@ Git needs to know who you are before you can commit any code. This is a **one-ti
 
 Open your terminal and run these two commands, replacing the name/email with your own (use the **same email as your GitHub account**):
 
-```powershell
+```bash
 git config --global user.name "Your Name"
 git config --global user.email "your.email@example.com"
 ```
 
 Verify it saved correctly:
 
-```powershell
+```bash
 git config --global --list
 ```
 
@@ -147,9 +148,23 @@ You should see `user.name` and `user.email` listed.
 
 ## 6. Connecting Git to GitHub (Authentication)
 
-When you try to push code, GitHub needs to verify it's really you. The easiest method for beginners is **HTTPS with a Personal Access Token (PAT)**.
+When you try to push code, GitHub needs to verify it's really you. If you're using **VS Code** (recommended), this is the easiest possible method — no tokens to create or copy-paste.
 
-### Step 1 — Create a Personal Access Token
+### Main method: Sign in through VS Code
+
+1. Open VS Code.
+2. Click the **Accounts** icon in the bottom-left corner → **Sign in with GitHub**.
+   - Alternatively, open the **Source Control** tab (left sidebar) → click **Publish Branch** or **Sign in** when prompted.
+3. Your web browser opens automatically, showing a GitHub authorization page. Log in if needed, then click **Authorize Visual-Studio-Code**.
+4. Return to VS Code — you're now signed in. Git operations you do from VS Code's Source Control panel, or even its built-in terminal, will authenticate automatically. No token, no repeated password prompts.
+
+That's it — you can skip straight to [Section 7](#7-downloading-cloning-the-internops-project).
+
+### Alternative: Personal Access Token (PAT)
+
+If you're working purely from a terminal outside VS Code (or VS Code's sign-in isn't working), use **HTTPS with a Personal Access Token**:
+
+#### Step 1 — Create a Personal Access Token
 
 1. Log in to GitHub → click your profile picture (top right) → **Settings**.
 2. Scroll down the left sidebar → **Developer settings**.
@@ -160,7 +175,7 @@ When you try to push code, GitHub needs to verify it's really you. The easiest m
 7. Click **Generate token**.
 8. **Copy the token immediately** — GitHub only shows it once. Paste it somewhere safe (like a password manager or a private note) — you'll use it as your "password" when Git asks.
 
-### Step 2 — Use it
+#### Step 2 — Use it
 
 The first time you `git push` or `git pull` from a private/authenticated action, a window (or terminal prompt) will ask for your GitHub username and password:
 
@@ -169,34 +184,60 @@ The first time you `git push` or `git pull` from a private/authenticated action,
 
 Git/your OS will usually remember it after the first time (via "credential manager").
 
-> **Alternative (more advanced): SSH keys.** If your team prefers SSH, ask your mentor — it avoids re-entering tokens but requires a few extra setup steps (`ssh-keygen`, adding the public key to GitHub under Settings → SSH and GPG keys). Stick with HTTPS + token for now if you're new.
+> **Alternative (more advanced): SSH keys.** If your team prefers SSH, ask your mentor — it avoids re-entering tokens but requires a few extra setup steps (`ssh-keygen`, adding the public key to GitHub under Settings → SSH and GPG keys).
+
+> **Alternative: GitHub Desktop.** If you're not using VS Code and typing tokens into a terminal feels intimidating, install [GitHub Desktop](https://desktop.github.com) instead. Sign in with your GitHub account through its UI once, and it handles all authentication for you.
 
 ---
 
 ## 7. Downloading (Cloning) the InternOps Project
 
-1. Open your terminal.
-2. Navigate to the folder where you want the project to live, e.g.:
+InternOps uses a **fork-based workflow** — you work on your own copy of the repo (a "fork") rather than the original directly.
 
-```powershell
+1. Go to https://github.com/rajat-wyrm/InternOps and click **Fork** (top-right of the page) to create your own copy under your GitHub account.
+2. Open your terminal and navigate to the folder where you want the project to live, e.g.:
+
+```bash
 cd Documents
 mkdir Projects
 cd Projects
 ```
 
-3. Clone the repository:
+3. Clone **your fork** (not the original):
 
-```powershell
-git clone https://github.com/rajat-wyrm/InternOps.git
+```bash
+git clone https://github.com/YOUR-USERNAME/InternOps.git
 ```
 
 4. Move into the project folder:
 
-```powershell
+```bash
 cd InternOps
 ```
 
-You now have a full local copy of the project.
+5. Set up your remotes. Cloning your fork automatically names it `origin`. You also need a link to the **original** repo so you can pull in updates the team makes — this is conventionally called `upstream`:
+
+```bash
+git remote add upstream https://github.com/rajat-wyrm/InternOps.git
+```
+
+Verify both remotes are set correctly:
+
+```bash
+git remote -v
+```
+
+You should see four lines: `origin` pointing to your fork (fetch + push) and `upstream` pointing to `rajat-wyrm/InternOps` (fetch + push).
+
+> **Why this matters:** `origin` is where _you_ push your work. `upstream` is where you pull _the team's_ latest changes from, so your fork doesn't fall behind. Before starting a new task, sync with:
+>
+> ```bash
+> git checkout master
+> git pull upstream master
+> git push origin master
+> ```
+
+You now have a full local copy of the project, linked to both your fork and the original repo.
 
 ---
 
@@ -221,21 +262,25 @@ As a beginner, you'll spend most of your time inside either `backend/` or `front
 
 ## 9. Installing Project Dependencies
 
-Every Node.js project has a `package.json` file listing the libraries it needs. `npm install` reads that file and downloads everything.
+Every Node.js project has a `package.json` file listing the libraries it needs, plus a `package-lock.json` that pins the **exact** versions everyone on the team is using.
+
+For this first install, use `npm ci` (not `npm install`). It reads `package-lock.json` and installs those exact versions — guaranteeing your setup matches everyone else's, and it's faster too.
 
 From the project root:
 
-```powershell
+```bash
 cd backend
-npm install
+npm ci
 ```
 
-```powershell
+```bash
 cd ../frontend
-npm install
+npm ci
 ```
 
 This creates a `node_modules` folder in each — that's normal, it's just the downloaded libraries (never edit files inside it, and never commit it — it's already excluded via `.gitignore`).
+
+> **`npm ci` vs `npm install`:** Use `npm ci` whenever you're doing a fresh install from an existing `package-lock.json` (like right now) — it's stricter and reproducible. Use `npm install` only when you're _adding or updating_ a package yourself, since that's the command that actually modifies `package.json`/`package-lock.json`. If `npm ci` ever fails with a lock-file error, ask your team lead before running `npm install` to "fix" it — the lock file may be intentionally different from what you expect.
 
 ---
 
@@ -262,27 +307,60 @@ cp .env.example .env
 | `PORT`         | Leave as `5000` unless told otherwise              |
 | `NODE_ENV`     | `development` while you're working locally         |
 
-Ask your mentor/team lead for shared values (like a dev database URL) if you don't have your own PostgreSQL set up yet.
+See Section 11 to create your own free Neon database and get this value.
 
 ---
 
 ## 11. Setting Up the Database
 
-You'll need PostgreSQL installed and running (locally, or a hosted dev database your team gives you access to — e.g., Neon).
+InternOps uses **PostgreSQL**, and this project's dev database is hosted on **Neon** (a free, cloud-hosted Postgres) — so you don't need to install Postgres on your own machine.
+
+### Step 1 — Get your database connection string
+
+Create your own free Neon project:
+
+1. Go to https://neon.tech and sign up (you can use your GitHub account to sign in).
+2. Click **Create a project**. Give it any name, e.g. `internops-dev`.
+3. When asked to choose a **region** for the server, select **Singapore**.
+4. Once created, go to your project's **Dashboard** → look for **Connection string** (sometimes under "Connection Details").
+5. Copy the connection string — it looks like:
+   ```
+   postgresql://username:password@ep-something-123456.us-east-2.aws.neon.tech/neondb?sslmode=require
+   ```
+
+### Step 2 — Add it to your `.env` file
+
+Open `backend/.env` (created in Section 10) and paste the connection string as your `DATABASE_URL`:
+
+```
+DATABASE_URL=postgresql://username:password@ep-something-123456.us-east-2.aws.neon.tech/neondb?sslmode=require
+```
+
+> **Important — Neon-specific fix:** InternOps needs one extra parameter appended to the end of the URL for Neon to work correctly: `&uselibpqcompat=true`. So the full line should look like:
+>
+> ```
+> DATABASE_URL=postgresql://username:password@ep-something-123456.us-east-2.aws.neon.tech/neondb?sslmode=require&uselibpqcompat=true
+> ```
+>
+> If you skip this, you may see connection errors or timeouts later (see Section 17).
+
+### Step 3 — Create the tables and seed data
 
 Once `DATABASE_URL` in `.env` is correct, from `backend/`:
 
-```powershell
+```bash
 npm run migrate
 ```
 
-This creates all the necessary tables.
+This creates all the necessary tables. It's safe to run more than once — it skips anything already applied.
 
-```powershell
+```bash
 npm run seed
 ```
 
 This creates a default admin account: `admin@internops.com` / `Admin@123` (for local testing only).
+
+> **Tip:** If either command fails, double-check there are no extra spaces or line breaks in your `DATABASE_URL`, and that it starts with `postgresql://`.
 
 ---
 
@@ -290,7 +368,7 @@ This creates a default admin account: `admin@internops.com` / `Admin@123` (for l
 
 ### Start the backend
 
-```powershell
+```bash
 cd backend
 npm run dev
 ```
@@ -299,7 +377,7 @@ This starts the API server (auto-restarts when you save a file). Visit `http://l
 
 ### Start the frontend (in a **separate** terminal window)
 
-```powershell
+```bash
 cd frontend
 npm run dev
 ```
@@ -316,16 +394,17 @@ This gives you a local URL (usually `http://localhost:5173`) to view the app in 
 
 ### Step-by-step for every task:
 
-**1. Make sure your local `master` is up to date:**
+**1. Make sure your local `master` is up to date with the original repo:**
 
-```powershell
+```bash
 git checkout master
-git pull origin master
+git pull upstream master
+git push origin master
 ```
 
 **2. Create a new branch for your task:**
 
-```powershell
+```bash
 git checkout -b feature/short-task-description
 ```
 
@@ -335,13 +414,13 @@ Naming convention examples: `feature/notice-board-ui`, `fix/csrf-bug`, `chore/up
 
 **4. Check what changed:**
 
-```powershell
+```bash
 git status
 ```
 
 **5. Stage your changes** (tell Git which files to include in the next commit):
 
-```powershell
+```bash
 git add .
 ```
 
@@ -349,13 +428,13 @@ git add .
 
 **6. Commit with a clear message:**
 
-```powershell
+```bash
 git commit -m "Fix: correct CSRF token validation on task creation"
 ```
 
 **7. Push your branch to GitHub:**
 
-```powershell
+```bash
 git push origin feature/short-task-description
 ```
 
@@ -389,39 +468,23 @@ InternOps tracks work using **GitHub Issues**.
 
 ## 15. How to Do a Pull Request (PR)
 
-A Pull Request is how you propose merging your branch's changes into `master` so the team can review before it goes live.
+A Pull Request is how you propose merging your branch's changes into `master` so the team can review before it goes live. Since InternOps uses a fork-based workflow (Section 7), your PR goes from your fork's branch into the original repo's `master`.
 
-### If you're a direct collaborator (have push access):
+1. Do your branch/commit work as in Section 13, then push to **your fork** (`origin`):
 
-1. Push your branch (see Section 13, step 7).
-2. Go to https://github.com/rajat-wyrm/InternOps
-3. GitHub usually shows a yellow banner: **"Compare & pull request"** for your recently pushed branch — click it.
-   - If not, go to the **Pull requests** tab → **New pull request** → choose your branch as "compare" and `master` as "base."
-4. Fill in:
-   - **Title**: short summary, e.g. "Fix CSRF validation bug in task creation"
-   - **Description**: what you changed, why, and how to test it. Reference the issue if there is one, e.g. `Closes #42`.
-5. Click **Create pull request**.
-6. Wait for a reviewer (usually the maintainer/team lead) to review. They may:
-   - Approve and merge it
-   - Request changes — go back to your branch, make edits, `git add`, `git commit`, `git push` again (it auto-updates the same PR)
-7. Once merged, delete your branch (GitHub shows a "Delete branch" button after merge) and start fresh from `master` for your next task.
-
-### If you don't have push access (fork-based workflow):
-
-1. Click **Fork** (top-right of the repo page) to create your own copy under your GitHub account.
-2. Clone **your fork** instead of the original:
-
-```powershell
-git clone https://github.com/YOUR-USERNAME/InternOps.git
-```
-
-3. Do all your branch/commit work as in Section 13, but push to **your fork**:
-
-```powershell
+```bash
 git push origin feature/short-task-description
 ```
 
-4. Go to your fork on GitHub → **Contribute** → **Open pull request**. This creates a PR from your fork's branch into the original repo's `master`.
+2. Go to your fork on GitHub → **Contribute** → **Open pull request**. This creates a PR from your fork's branch into the original repo's `master`.
+3. Fill in:
+   - **Title**: short summary, e.g. "Fix CSRF validation bug in task creation"
+   - **Description**: what you changed, why, and how to test it. Reference the issue if there is one, e.g. `Closes #42`.
+4. Click **Create pull request**.
+5. Wait for a reviewer (usually the maintainer/team lead) to review. They may:
+   - Approve and merge it
+   - Request changes — go back to your branch, make edits, `git add`, `git commit`, `git push` again (it auto-updates the same PR)
+6. Once merged, delete your branch and start fresh from `master` for your next task.
 
 > Note: as of this writing, the InternOps README states external contributions aren't accepted — so this workflow applies to internal team members with fork/PR access rather than the general public. Confirm the exact process with your team lead.
 
@@ -429,20 +492,20 @@ git push origin feature/short-task-description
 
 ## 16. Everyday Git Cheat Sheet
 
-| What you want to do                   | Command                       |
-| ------------------------------------- | ----------------------------- |
-| See current status                    | `git status`                  |
-| Switch to master branch               | `git checkout master`         |
-| Get latest code from GitHub           | `git pull origin master`      |
-| Create + switch to new branch         | `git checkout -b branch-name` |
-| Switch to an existing branch          | `git checkout branch-name`    |
-| Stage all changes                     | `git add .`                   |
-| Commit staged changes                 | `git commit -m "message"`     |
-| Push branch to GitHub                 | `git push origin branch-name` |
-| See commit history                    | `git log --oneline`           |
-| See which branch you're on            | `git branch`                  |
-| Discard uncommitted changes in a file | `git checkout -- filename`    |
-| Undo last commit (keep changes)       | `git reset --soft HEAD~1`     |
+| What you want to do                    | Command                       |
+| -------------------------------------- | ----------------------------- |
+| See current status                     | `git status`                  |
+| Switch to master branch                | `git checkout master`         |
+| Get latest code from the original repo | `git pull upstream master`    |
+| Create + switch to new branch          | `git checkout -b branch-name` |
+| Switch to an existing branch           | `git checkout branch-name`    |
+| Stage all changes                      | `git add .`                   |
+| Commit staged changes                  | `git commit -m "message"`     |
+| Push branch to GitHub                  | `git push origin branch-name` |
+| See commit history                     | `git log --oneline`           |
+| See which branch you're on             | `git branch`                  |
+| Discard uncommitted changes in a file  | `git checkout -- filename`    |
+| Undo last commit (keep changes)        | `git reset --soft HEAD~1`     |
 
 ---
 
