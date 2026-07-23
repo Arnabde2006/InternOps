@@ -12,10 +12,41 @@ function initializeWebSocket(server, logger) {
       origin: config.corsOrigin,
       credentials: true,
     },
+    allowRequest: (req, callback) => {
+      const url = new URL(req.url, 'http://localhost');
+      const token =
+        url.searchParams.get('token') ||
+        (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')
+          ? req.headers.authorization.split(' ')[1]
+          : null) ||
+        req.headers['sec-websocket-protocol'];
+
+      if (token) {
+        try {
+          verifyAccessToken(token);
+        } catch (err) {
+          log?.warn(
+            {
+              err,
+              clientIp: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+            },
+            'WebSocket handshake authentication failed: invalid token'
+          );
+          return callback('Unauthorized', false);
+        }
+      }
+      callback(null, true);
+    },
   });
 
   io.use((socket, next) => {
-    const rawToken = socket.handshake?.auth?.token;
+    const rawToken =
+      socket.handshake?.auth?.token ||
+      socket.handshake?.query?.token ||
+      (socket.handshake?.headers?.authorization &&
+      socket.handshake.headers.authorization.startsWith('Bearer ')
+        ? socket.handshake.headers.authorization.split(' ')[1]
+        : null);
     const token = typeof rawToken === 'string' ? rawToken : '';
     const clientIp =
       socket.handshake?.headers?.['x-forwarded-for'] ||
@@ -56,9 +87,20 @@ function initializeWebSocket(server, logger) {
   });
 
   io.on('connection', (socket) => {
+    // Attach error listener to prevent process crashes
+    socket.on('error', (err) => {
+      log?.error({ err, userId: socket.userId }, 'WebSocket connection error');
+    });
+
+    if (socket.conn) {
+      socket.conn.on('error', (err) => {
+        log?.error({ err, userId: socket.userId }, 'Underlying socket connection error');
+      });
+    }
+
     socket.join(`user_${socket.userId}`);
     socket.on('disconnect', () => {
-      log.info({ socketId: socket.id }, 'Client disconnected');
+      log?.info({ socketId: socket.id }, 'Client disconnected');
     });
   });
   return io;
