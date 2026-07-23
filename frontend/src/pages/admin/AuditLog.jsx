@@ -52,8 +52,20 @@ export default function AuditLog() {
           </div>
         </div>
       </div>
+      {isError ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <h3 className="text-lg font-semibold text-red-700">
+            Failed to load audit logs
+          </h3>
 
-      {isLoading ? (
+          <button
+            onClick={() => refetch()}
+            className="mt-4 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            Retry
+          </button>
+        </div>
+      ) : isLoading ? (
         <div className="flex justify-center p-8">
           <Spinner />
         </div>

@@ -20,7 +20,12 @@ export default function Departments() {
   const [deletingId, setDeletingId] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  const { data: departments = [], isLoading } = useQuery({
+  const {
+    data: departments = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['departments'],
     queryFn: () => api.get('/departments').then((r) => r.data),
   });
@@ -134,8 +139,17 @@ export default function Departments() {
           </form>
         </Card>
       )}
+      {isError ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <h3 className="text-lg font-semibold text-red-700">
+            Failed to load departments
+          </h3>
 
-      {isLoading ? (
+          <Btn className="mt-4" onClick={() => refetch()}>
+            Retry
+          </Btn>
+        </div>
+      ) : isLoading ? (
         <div className="flex justify-center p-8">
           <Spinner />
         </div>
