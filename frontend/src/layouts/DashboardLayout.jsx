@@ -27,7 +27,7 @@ import {
   ToggleRight,
 } from 'lucide-react';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import api from '../lib/axios';
@@ -419,7 +419,18 @@ export default function DashboardLayout() {
           </div>
         </header>
         <main className="flex-1 overflow-auto p-5 sm:p-6">
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center min-h-[50vh] w-full">
+                <div className="relative w-12 h-12 animate-fade-in">
+                  <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-white/5"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-t-transparent border-r-transparent border-indigo-600 dark:border-indigo-400 animate-spin"></div>
+                </div>
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 
