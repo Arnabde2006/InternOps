@@ -319,13 +319,16 @@ app.addHook('onResponse', async (request, reply) => {
 
   if (!request?.auditOnResponse) return;
 
-  try {
-    await createAuditLog(request.auditOnResponse);
-  } catch (err) {
-    request.log.error(
-      { err, audit: request.auditOnResponse },
-      'Failed to write deferred audit log'
-    );
+  // Only emit audit log for successful responses (status codes 2xx)
+  if (reply.statusCode >= 200 && reply.statusCode < 300) {
+    try {
+      await createAuditLog(request.auditOnResponse);
+    } catch (err) {
+      request.log.error(
+        { err, audit: request.auditOnResponse },
+        'Failed to write deferred audit log'
+      );
+    }
   }
 });
 
