@@ -379,11 +379,11 @@ export default function CanvaTemplates() {
                   </div>
 
                   <div className="px-4 pb-4">
-  <div className="text-xs text-gray-400 dark:text-gray-500">
-  {template.created_at
-    ? `Created ${new Date(template.created_at).toLocaleDateString()}`
-    : 'Recently created'}
-</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">
+                      {template.created_at
+                        ? `Created ${new Date(template.created_at).toLocaleDateString()}`
+                        : 'Recently created'}
+                    </div>
                   </div>
                 </div>
               ))}
