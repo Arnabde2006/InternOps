@@ -3,7 +3,6 @@ module.exports = [
     ignores: ['coverage/**', 'node_modules/**'],
   },
   {
-    // 1. Base configuration for ALL backend JS files
     files: ['**/*.js'],
     languageOptions: {
       ecmaVersion: 2021,
@@ -11,14 +10,33 @@ module.exports = [
       globals: {
         console: 'readonly',
         process: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        global: 'readonly',
+        exports: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        jest: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
       },
     },
     rules: {
-      // ... keep any existing rules here
+      'no-eval': 'error',
     },
   },
   {
-    // 2. Override configuration specifically for k6 load test files
     files: ['tests/load/**/*.js'],
     languageOptions: {
       sourceType: 'module',
