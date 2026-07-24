@@ -82,9 +82,10 @@ async function loadMigrations(dir) {
 
     const filePath = path.join(dir, file);
     const sql = await readFileWithRetry(filePath);
+    const normalizedSql = sql.replace(/\r\n/g, '\n');
     const checksum = crypto
       .createHash('sha256')
-      .update(sql, 'utf8')
+      .update(normalizedSql, 'utf8')
       .digest('hex');
     migrations.push({ name: file, sql, checksum });
   }
