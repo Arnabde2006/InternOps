@@ -1,7 +1,21 @@
 import asyncio
-from google import genai
-from app.core.config import GEMINI_API_KEY, GEMINI_MODEL
+import json
+import os
+from typing import Any, Dict
 
+import httpx
+
+from app.providers.base import (
+    BaseAIProvider,
+    ProviderAPIError,
+    ProviderRateLimitError,
+    ProviderTimeoutError,
+)
+
+# Mirrors AI_MAX_RESPONSE_BYTES in the JS reference (default 2MB there;
+# provider adapters here use the same default so behavior is consistent
+# across both services).
+MAX_RESPONSE_BYTES = int(os.environ.get("AI_MAX_RESPONSE_BYTES", 2 * 1024 * 1024))
 MAX_MESSAGES = 32
 MAX_MESSAGE_CHARS = 4000
 
@@ -15,22 +29,109 @@ def _build_prompt(messages: list[dict]) -> str:
     return "\n".join(parts)
 
 
-def _call_gemini_sync(prompt: str) -> str:
-    """Blocking call to Gemini API — run this in a thread via asyncio.to_thread."""
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    response = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=prompt,
-    )
-    if not response.text:
-        raise ValueError("Gemini returned an empty response")
-    return response.text
+class GeminiProvider(BaseAIProvider):
+    """Adapter for Google Gemini REST/SDK API."""
+
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str = "gemini-2.5-flash",
+        timeout: float = 15.0,
+    ):
+        super().__init__(api_key=api_key, model_name=model_name)
+        self.timeout = timeout
+        self.base_url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self.model_name}:generateContent"
+        )
+
+    async def generate_text(self, prompt: str, temperature: float = 0.7, **kwargs) -> str:
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": temperature},
+        }
+        response_data = await self._send_request(payload)
+        try:
+            return response_data["candidates"][0]["content"]["parts"][0]["text"]
+        except (KeyError, IndexError) as e:
+            raise ProviderAPIError(
+                f"Unexpected response payload from Gemini: {e}", self.provider_name
+            )
+
+    async def generate_json(
+        self, prompt: str, schema: Dict[str, Any], temperature: float = 0.2, **kwargs
+    ) -> Dict[str, Any]:
+        json_prompt = (
+            f"{prompt}\n\nRespond ONLY with valid JSON matching this schema:\n"
+            f"{json.dumps(schema)}"
+        )
+        payload = {
+            "contents": [{"parts": [{"text": json_prompt}]}],
+            "generationConfig": {
+                "temperature": temperature,
+                "responseMimeType": "application/json",
+            },
+        }
+        response_data = await self._send_request(payload)
+        try:
+            raw_text = response_data["candidates"][0]["content"]["parts"][0]["text"]
+            return json.loads(raw_text)
+        except (KeyError, IndexError, json.JSONDecodeError) as e:
+            raise ProviderAPIError(
+                f"Failed to parse structured JSON from Gemini response: {e}",
+                self.provider_name,
+            )
+
+    async def _send_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        url = f"{self.base_url}?key={self.api_key}"
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                async with client.stream("POST", url, json=payload) as response:
+                    if response.status_code == 429:
+                        raise ProviderRateLimitError(
+                            "Gemini rate limit or quota exceeded",
+                            self.provider_name,
+                            status_code=429,
+                        )
+                    if response.is_error:
+                        body = await response.aread()
+                        raise ProviderAPIError(
+                            f"Gemini API error: {body.decode(errors='replace')}",
+                            self.provider_name,
+                            status_code=response.status_code,
+                        )
+                    return await self._read_json_with_limit(response)
+            except httpx.TimeoutException:
+                raise ProviderTimeoutError("Gemini API request timed out", self.provider_name)
+            except httpx.RequestError as e:
+                raise ProviderAPIError(
+                    f"Network error connecting to Gemini API: {e}", self.provider_name
+                )
+
+    async def _read_json_with_limit(self, response: httpx.Response) -> Dict[str, Any]:
+        """Stream the body and enforce MAX_RESPONSE_BYTES before parsing,
+        instead of buffering an unbounded body via response.json()."""
+        chunks = []
+        received = 0
+        async for chunk in response.aiter_bytes():
+            received += len(chunk)
+            if received > MAX_RESPONSE_BYTES:
+                raise ProviderAPIError(
+                    f"Gemini response exceeded {MAX_RESPONSE_BYTES} bytes",
+                    self.provider_name,
+                )
+            chunks.append(chunk)
+        try:
+            return json.loads(b"".join(chunks))
+        except json.JSONDecodeError as e:
+            raise ProviderAPIError(f"Gemini returned invalid JSON: {e}", self.provider_name)
 
 
 async def call_gemini(messages: list[dict]) -> str:
     """
-    Send messages to Gemini API using the new google-genai SDK (v2).
-    Uses asyncio.to_thread so the blocking SDK call doesn't block the event loop.
+    Send messages to Gemini API using the new GeminiProvider REST adapter.
     """
+    from app.core.config import GEMINI_API_KEY, GEMINI_MODEL
     prompt = _build_prompt(messages)
-    return await asyncio.to_thread(_call_gemini_sync, prompt)
+    provider = GeminiProvider(api_key=GEMINI_API_KEY, model_name=GEMINI_MODEL)
+    return await provider.generate_text(prompt)
