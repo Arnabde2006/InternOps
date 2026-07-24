@@ -36,16 +36,16 @@ module.exports = [
       'no-eval': 'error',
     },
   },
-{
-  files: ['tests/load/**/*.js'],
-  languageOptions: {
-    sourceType: 'module',
-     ecmaVersion: 'latest',
-    globals: {
-      __ENV: 'readonly',
-      __VU: 'readonly',
-      __ITER: 'readonly',
+  {
+    files: ['tests/load/**/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+      ecmaVersion: 'latest',
+      globals: {
+        __ENV: 'readonly',
+        __VU: 'readonly',
+        __ITER: 'readonly',
+      },
     },
   },
-},
 ];
