@@ -46,17 +46,20 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install backend dependencies
-        shell: bash
-        run: |
-          cd backend
-          npm install --no-audit --no-fund
+  shell: bash
+  run: |
+    cd backend
+    npm install --no-audit --no-fund
 
-      - name: Wait for PostgreSQL
-        run: |
-          until pg_isready -h localhost -p 5432 -U postgres; do
-            echo "Waiting for PostgreSQL..."
-            sleep 2
-          done
+    - name: Run backend linting
+  run: cd backend && npm run lint
+
+  - name:Wait for PostgreSQL
+  run: |
+    until pg_isready -h localhost -p 5432 -U postgres; do
+      echo "Waiting for PostgreSQL..."
+      sleep 2
+    done
 
       - name: Run migrations
         run: cd backend && npm run migrate
