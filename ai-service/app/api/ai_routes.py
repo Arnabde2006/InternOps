@@ -2,17 +2,17 @@
 AI routes — Python/FastAPI port of ai_routes.js
 
 Split to match ai-service/app's layout (api/ + core/ + models/ + providers/):
-  - app/models/ai.py   -> request/response schemas
-  - app/core/auth.py    -> get_current_user (STUB)
-  - app/core/rbac.py    -> require_roles (STUB)
-  - app/core/rate_limit.py -> enforce_rate_limit (STUB)
-  - app/core/usage.py   -> daily usage tracking (STUB)
-  - app/providers/*     -> base/gemini/openai adapters (not wired up yet)
+  - app/models/ai.py         -> request/response schemas
+  - app/core/auth.py          -> get_current_user (STUB)
+  - app/core/rbac.py           -> require_roles (STUB)
+  - app/core/rate_limit.py      -> enforce_rate_limit (STUB)
+  - app/core/usage.py            -> daily usage tracking (STUB)
+  - app/providers/*                -> base/gemini/openai adapters (real, from #1421)
+  - app/providers/registry.py     -> provider selection (get_provider), added here
 
-TODO(providers): `call_provider` below is a placeholder — wire it to the
-real adapters in app/providers/base.py, gemini.py, openai.py once their
-interface is settled. Guessed call contract based on the JS
-`generateAIResponse({ userId, messages })` -> { provider, cached, content }.
+`call_provider` below flattens the message list into a single prompt
+(see `_messages_to_prompt`) since BaseAIProvider.generate_text() doesn't
+support multi-turn history yet, then calls the configured adapter for real.
 """
 
 from datetime import datetime, timezone
@@ -37,6 +37,8 @@ from ..models.ai import (
     ProviderResult,
     UsageResponse,
 )
+from ..providers.base import AIProviderError, ProviderAPIError, ProviderRateLimitError
+from ..providers.registry import get_configured_providers_health, get_provider
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 
@@ -48,19 +50,34 @@ MAX_TOTAL_CHARS = 32000
 BODY_LIMIT_BYTES = 2 * 1024 * 1024
 
 
+def _messages_to_prompt(messages: List[dict]) -> str:
+    """Flatten a chat-style message list into a single prompt string.
+
+    TODO(providers): BaseAIProvider.generate_text() takes a single prompt,
+    not a multi-turn message list — the adapters don't have native
+    chat/history support yet. This is a simple, intentionally-lossy
+    workaround (roles become text labels, no real conversation structure)
+    until the provider interface grows multi-turn support.
+    """
+    role_labels = {"user": "User", "assistant": "Assistant", "system": "System"}
+    return "\n\n".join(
+        f"{role_labels.get(m['role'], m['role'])}: {m['content']}" for m in messages
+    )
+
+
 async def call_provider(user_id: str, messages: List[dict]) -> ProviderResult:
-    # TODO(providers): replace with real dispatch, e.g.:
-    #   from ..providers.gemini import GeminiProvider
-    #   from ..providers.openai import OpenAIProvider
-    #   provider = select_provider(...)
-    #   result = await provider.generate(messages)
-    raise NotImplementedError("Wire this up to providers/gemini.py or providers/openai.py")
+    provider = get_provider()
+    prompt = _messages_to_prompt(messages)
+    content = await provider.generate_text(prompt)
+    return ProviderResult(
+        provider=provider.provider_name,
+        cached=False,  # TODO(caching): no caching layer wired up yet
+        content=content,
+    )
 
 
 def get_provider_health() -> list:
-    # TODO(providers): replace with real health checks against
-    # providers/gemini.py and providers/openai.py
-    return []
+    return get_configured_providers_health()
 
 
 # ---------------------------------------------------------------------------
@@ -142,15 +159,24 @@ async def chat(
         return ChatResponse(
             provider=result.provider, cached=result.cached, content=result.content
         )
-    except NotImplementedError:
-        raise
-    except Exception as error:  # noqa: BLE001 — mirror JS catch-all
-        status_code = getattr(error, "status_code", None)
-        if status_code == 413:
+    except ProviderRateLimitError:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="AI provider rate limit exceeded",
+        )
+    except ProviderAPIError as error:
+        if error.status_code == 413:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail="AI provider response too large",
             )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service unavailable",
+        )
+    except AIProviderError:
+        # Covers ProviderTimeoutError, and any AIProviderError raised
+        # directly by the registry (e.g. missing API key config).
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="AI service unavailable",

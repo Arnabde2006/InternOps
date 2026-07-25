@@ -63,18 +63,62 @@ def test_chat_truncates_message_list_to_16(client):
     assert r.status_code != 413
 
 
-def test_chat_prompt_fallback_when_no_messages(client):
+def test_chat_without_configured_provider_key_returns_503(client, monkeypatch):
+    # No GEMINI_API_KEY/OPENAI_API_KEY set in the test environment ->
+    # the registry raises AIProviderError -> mapped to 503.
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     r = client.post("/ai/chat", json={"prompt": "hello"})
-    # Reaches the provider stub -> 500 until providers are wired up.
-    # TODO: once call_provider is real, change this to assert 200 and
-    # check the response body shape instead.
-    assert r.status_code == 500
+    assert r.status_code == 503
+    assert r.json()["detail"] == "AI service unavailable"
 
 
-def test_health_endpoint(client):
+def test_chat_happy_path_with_mocked_provider(client, monkeypatch):
+    import app.api.ai_routes as ai_routes_module
+    from app.models.ai import ProviderResult
+
+    async def fake_call_provider(user_id, messages):
+        return ProviderResult(provider="fake-provider", cached=False, content="hi there!")
+
+    monkeypatch.setattr(ai_routes_module, "call_provider", fake_call_provider)
+
+    r = client.post("/ai/chat", json={"prompt": "hello"}, headers={"x-user-id": "happy-path"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body == {"provider": "fake-provider", "cached": False, "content": "hi there!"}
+
+
+def test_messages_to_prompt_flattens_roles():
+    from app.api.ai_routes import _messages_to_prompt
+
+    prompt = _messages_to_prompt(
+        [
+            {"role": "system", "content": "Be concise."},
+            {"role": "user", "content": "Hi"},
+        ]
+    )
+    assert prompt == "System: Be concise.\n\nUser: Hi"
+
+
+def test_health_endpoint(client, monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     r = client.get("/ai/health")
     assert r.status_code == 200
-    assert r.json() == {"providers": []}
+    body = r.json()
+    names = {p["name"] for p in body["providers"]}
+    assert names == {"gemini", "openai"}
+    assert all(p["status"] == "unhealthy" for p in body["providers"])
+
+
+def test_health_endpoint_reports_healthy_when_key_present(client, monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    r = client.get("/ai/health")
+    body = r.json()
+    gemini_entry = next(p for p in body["providers"] if p["name"] == "gemini")
+    assert gemini_entry["status"] == "healthy"
+    assert gemini_entry["lastErrorMessage"] is None
 
 
 def test_usage_endpoint(client):
