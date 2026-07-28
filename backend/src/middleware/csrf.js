@@ -62,10 +62,28 @@ function normalizeOrigin(value) {
 }
 
 function getTrustedOrigins() {
-  return [config.corsOrigin, config.appUrl]
-    .filter(Boolean)
-    .map(normalizeOrigin)
-    .filter(Boolean);
+  const origins = [];
+
+  const addValue = (val) => {
+    if (!val) return;
+    if (Array.isArray(val)) {
+      val.forEach(addValue);
+    } else if (typeof val === 'string') {
+      if (val.includes(',')) {
+        val.split(',').forEach((v) => addValue(v.trim()));
+      } else {
+        const normalized = normalizeOrigin(val);
+        if (normalized && normalized !== '*') {
+          origins.push(normalized);
+        }
+      }
+    }
+  };
+
+  addValue(config.corsOrigin);
+  addValue(config.appUrl);
+
+  return [...new Set(origins)];
 }
 
 function isTrustedRequestOrigin(request) {
@@ -74,20 +92,27 @@ function isTrustedRequestOrigin(request) {
   const candidates = [originHeader, refererHeader].filter(Boolean);
 
   if (!candidates.length) {
-    return process.env.NODE_ENV === 'test';
+    return false;
   }
 
   const trustedOrigins = new Set(getTrustedOrigins());
-  const host = request.headers?.host;
-  if (host) {
-    trustedOrigins.add(normalizeOrigin(`http://${host}`));
-    trustedOrigins.add(normalizeOrigin(`https://${host}`));
-  }
+  const isDev = config.nodeEnv !== 'production';
 
   return candidates.some((candidate) => {
     const normalized = normalizeOrigin(candidate);
     if (!normalized) return false;
-    return trustedOrigins.has(normalized);
+
+    if (trustedOrigins.has(normalized)) {
+      return true;
+    }
+
+    if (isDev) {
+      if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(normalized)) {
+        return true;
+      }
+    }
+
+    return false;
   });
 }
 
@@ -221,9 +246,33 @@ async function csrfCheck(request, reply) {
     request.headers.authorization &&
     request.headers.authorization.startsWith('Bearer ')
   );
+  let hasValidBearerAuth = false;
+  let decodedBearerToken = null;
+
+  if (hasBearerAuth) {
+    const authHeader = request.headers.authorization;
+    const authToken = authHeader.split(' ')[1];
+    try {
+      decodedBearerToken = verifyAccessToken(authToken);
+      hasValidBearerAuth = true;
+    } catch (err) {
+      logCsrfWarn(
+        request,
+        {
+          err,
+          method: request.method,
+          url: request.url,
+          hasAuthHeader: true,
+          tokenLength: authToken ? authToken.length : 0,
+        },
+        'CSRF bearer token verification failed during request validation'
+      );
+    }
+  }
+
   const hasSession = Boolean(session && session.sid);
 
-  if (!hasSession && hasBearerAuth) {
+  if (!hasSession && hasValidBearerAuth) {
     return;
   }
 
@@ -265,27 +314,8 @@ async function csrfCheck(request, reply) {
   let tokenUserId = null;
   if (request.user && request.user.id) {
     tokenUserId = request.user.id;
-  } else {
-    const authHeader = request.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const authToken = authHeader.split(' ')[1];
-      try {
-        const decoded = verifyAccessToken(authToken);
-        tokenUserId = decoded.id;
-      } catch (err) {
-        logCsrfWarn(
-          request,
-          {
-            err,
-            method: request.method,
-            url: request.url,
-            hasAuthHeader: true,
-            tokenLength: authToken ? authToken.length : 0,
-          },
-          'CSRF bearer token verification failed during request validation'
-        );
-      }
-    }
+  } else if (hasValidBearerAuth && decodedBearerToken) {
+    tokenUserId = decodedBearerToken.id;
   }
 
   if (tokenUserId) {
