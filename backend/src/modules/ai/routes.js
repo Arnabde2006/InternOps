@@ -35,11 +35,7 @@ async function routes(fastify) {
         description: 'Send chat message to AI',
         body: toSchema(chatBodySchema),
       },
-      preHandler: [
-        auth,
-        rbac('ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN', 'INTERN'),
-        sanitize,
-      ],
+      preHandler: [auth, rbac('ADMIN', 'SENIOR_TL', 'TL'), sanitize],
       // Keep Fastify's parser limit aligned with the maximum payload we accept.
       bodyLimit: 2 * 1024 * 1024, // 2 MB
       config: {

@@ -122,7 +122,7 @@ module.exports = {
     timeout: parseInt(process.env.AI_TIMEOUT, 10) || 25000,
     groqKey: process.env.GROQ_API_KEY,
     openaiKey: process.env.OPENAI_API_KEY,
-    geminiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
+    geminiKey: process.env.GEMINI_API_KEY,
     deepseekKey: process.env.DEEPSEEK_API_KEY,
     deepseekBaseUrl: process.env.DEEPSEEK_BASE_URL,
     huggingfaceToken: process.env.HUGGINGFACE_TOKEN,
