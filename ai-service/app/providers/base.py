@@ -42,10 +42,12 @@ class BaseAIProvider(ABC):
         self.api_key = api_key
         self.model_name = model_name
 
+    
+
     @property
     def provider_name(self) -> str:
         """Returns the canonical string name of the provider."""
-        return self.__class__.__name__
+        return self.__class__.__name__.removesuffix("Provider").lower()
 
     @abstractmethod
     async def generate_text(
