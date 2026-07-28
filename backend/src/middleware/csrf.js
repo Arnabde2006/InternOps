@@ -156,7 +156,7 @@ function rotateAndSetCsrf(request, reply, userId = null) {
   const csrfToken = tokenFor(newSid);
 
   reply.setCookie(TOKEN_COOKIE, csrfToken, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
     path: '/',
@@ -208,7 +208,7 @@ function getOrCreateToken(request, reply) {
 function generateToken(request, reply) {
   const token = getOrCreateToken(request, reply);
   reply.setCookie('csrf-token', token, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
     path: '/',
