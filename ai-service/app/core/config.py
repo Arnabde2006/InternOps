@@ -1,10 +1,4 @@
 import os
-
-# Maximum AI requests allowed per minute for a user/client
-RATE_LIMIT_PER_MINUTE = int(
-    os.getenv("RATE_LIMIT_PER_MINUTE", "15")
-)
-import os
 import warnings
 from typing import Any, List, Optional
 from dotenv import load_dotenv
@@ -13,6 +7,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Load .env file using dotenv to ensure os.environ is populated
 load_dotenv()
+
+# Maximum AI requests allowed per minute for a user/client
+RATE_LIMIT_PER_MINUTE = int(
+    os.getenv("RATE_LIMIT_PER_MINUTE", "15")
+)
 
 # ==============================================================================
 # Centralized Configuration Constraints
@@ -43,6 +42,9 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"
     )
+
+    PROJECT_NAME: str = "InternOps AI Service"
+    API_V1_STR: str = "/api/v1"
 
     # Strategy Configuration
     PRIMARY_AI_PROVIDER: str = "gemini"
@@ -208,4 +210,3 @@ HUGGINGFACE_MODEL = settings.HUGGINGFACE_MODEL
 AI_SERVICE_HOST = settings.AI_SERVICE_HOST
 AI_SERVICE_PORT = settings.AI_SERVICE_PORT
 REDIS_URL = settings.REDIS_URL
-
