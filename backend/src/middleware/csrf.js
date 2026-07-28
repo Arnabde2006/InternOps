@@ -57,7 +57,7 @@ function normalizeOrigin(value) {
     const parsed = new URL(trimmed);
     return `${parsed.protocol}//${parsed.host}`;
   } catch {
-    return trimmed.replace(/\/+$/, '');
+    return null;
   }
 }
 
