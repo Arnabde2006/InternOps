@@ -44,13 +44,20 @@ function initializeWebSocket(server, logger) {
     },
     allowRequest: (req, callback) => {
       const url = new URL(req.url, 'http://localhost');
-      const token =
+      let token =
         url.searchParams.get('token') ||
         (req.headers.authorization &&
         req.headers.authorization.startsWith('Bearer ')
           ? req.headers.authorization.split(' ')[1]
-          : null) ||
-        req.headers['sec-websocket-protocol'];
+          : null);
+
+      if (!token && req.headers['sec-websocket-protocol']) {
+        const protocols = req.headers['sec-websocket-protocol']
+          .split(',')
+          .map((p) => p.trim());
+        // Assume the token is passed as a protocol if it resembles a JWT
+        token = protocols.find((p) => p.split('.').length === 3);
+      }
 
       if (token) {
         try {
@@ -64,8 +71,17 @@ function initializeWebSocket(server, logger) {
             },
             'WebSocket handshake authentication failed: invalid token'
           );
-          return callback('Unauthorized', false);
+          return callback(new Error('Unauthorized'), false);
         }
+      } else {
+        log?.warn(
+          {
+            clientIp:
+              req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+          },
+          'WebSocket handshake authentication failed: missing token'
+        );
+        return callback(new Error('Unauthorized'), false);
       }
       callback(null, true);
     },
@@ -162,6 +178,7 @@ function initializeWebSocket(server, logger) {
     // Attach error listener to prevent process crashes
     socket.on('error', (err) => {
       log?.error({ err, userId: socket.userId }, 'WebSocket connection error');
+      socket.disconnect(true);
     });
 
     if (socket.conn) {
@@ -170,6 +187,7 @@ function initializeWebSocket(server, logger) {
           { err, userId: socket.userId },
           'Underlying socket connection error'
         );
+        socket.disconnect(true);
       });
     }
 
