@@ -45,6 +45,8 @@ export default function Tasks() {
   const [notification, setNotification] = useState(null);
   const [filterDeptId, setFilterDeptId] = useState(deptId || '');
 
+  const activeDeptId = deptId || filterDeptId;
+
   useEffect(() => {
     if (deptId) setFilterDeptId(deptId);
   }, [deptId]);
@@ -91,16 +93,14 @@ export default function Tasks() {
     enabled: isAdmin,
   });
 
-  const activeDepartment = departments.find(
-    (d) => d.id === (deptId || filterDeptId)
-  );
+  const activeDepartment = departments.find((d) => d.id === activeDeptId);
 
   const { data: tasks, isLoading } = useQuery({
-    queryKey: ['tasks', deptId || filterDeptId],
+    queryKey: ['tasks', activeDeptId],
     queryFn: () =>
       api
         .get('/tasks', {
-          params: { department_id: deptId || filterDeptId || undefined },
+          params: { department_id: activeDeptId || undefined },
         })
         .then((res) => res.data),
   });
@@ -284,7 +284,7 @@ export default function Tasks() {
   return (
     <div className="animate-fade-in-up">
       {/* Admin Department Navigation Context Banner */}
-      {isAdmin && (deptId || filterDeptId) && (
+      {isAdmin && activeDeptId && (
         <div className="mb-6 p-4 rounded-3xl bg-gradient-to-r from-slate-900 to-indigo-950 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-indigo-500/20 animate-fade-in">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">

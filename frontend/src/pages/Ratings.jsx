@@ -55,6 +55,8 @@ export default function Ratings() {
   const [viewDepartmentId, setViewDepartmentId] = useState(deptId || '');
   const [viewUserId, setViewUserId] = useState(deptId ? '' : user?.id || '');
 
+  const activeDeptId = deptId || viewDepartmentId;
+
   useEffect(() => {
     if (deptId) {
       setViewDepartmentId(deptId);
@@ -120,7 +122,7 @@ export default function Ratings() {
       .filter(
         (m) =>
           m.id !== user?.id &&
-          (!viewDepartmentId || m.department_id === viewDepartmentId)
+          (!activeDeptId || m.department_id === activeDeptId)
       )
       .map((m) => ({
         value: m.id,
@@ -128,14 +130,12 @@ export default function Ratings() {
       })),
   ];
 
-  const activeDepartment = departments.find(
-    (d) => d.id === (deptId || viewDepartmentId)
-  );
+  const activeDepartment = departments.find((d) => d.id === activeDeptId);
 
   return (
     <div className="animate-fade-in-up">
       {/* Admin Department Navigation Context Banner */}
-      {isAdmin && (deptId || viewDepartmentId) && (
+      {isAdmin && activeDeptId && (
         <div className="mb-6 p-4 rounded-3xl bg-gradient-to-r from-slate-900 to-indigo-950 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-indigo-500/20 animate-fade-in">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
@@ -258,7 +258,7 @@ export default function Ratings() {
                 </label>
 
                 <CustomSelect
-                  value={viewDepartmentId}
+                  value={activeDeptId}
                   onChange={handleViewDepartmentChange}
                   options={departmentOptions}
                   placeholder="All departments"
