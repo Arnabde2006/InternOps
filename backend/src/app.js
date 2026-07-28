@@ -16,6 +16,7 @@ const { csrfMiddleware } = require('./middleware/csrf');
 const { sanitizationMiddleware } = require('./middleware/sanitize');
 const { createAuditLog } = require('./utils/audit');
 const { setupCronJobs } = require('./utils/cron');
+const githubSyncOrchestrator = require('./modules/github-sync/orchestrator');
 
 const app = Fastify({
   trustProxy: config.nodeEnv === 'production' ? true : 'loopback',
@@ -113,7 +114,9 @@ app.register(require('@fastify/cors'), {
       return cb(null, true);
     }
 
-    return cb(new Error('Not allowed by CORS'), false);
+    const corsError = new Error('Not allowed by CORS');
+    corsError.statusCode = 403;
+    return cb(corsError, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -407,6 +410,7 @@ app.setErrorHandler((error, request, reply) => {
 
 if (process.env.NODE_ENV !== 'test') {
   setupCronJobs();
+  githubSyncOrchestrator.initialize();
 }
 
 const start = async () => {
@@ -454,6 +458,13 @@ const gracefulShutdown = async (signal) => {
 
     // Close database pool connections
     await pool.end();
+
+    // Shutdown GitHub sync orchestrator
+    try {
+      githubSyncOrchestrator.shutdown();
+    } catch (syncErr) {
+      app.log.warn({ err: syncErr }, 'Error shutting down GitHub sync');
+    }
 
     clearTimeout(forceShutdown);
     app.log.info('Cleanup completed. Exiting now.');
