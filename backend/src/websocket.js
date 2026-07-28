@@ -100,6 +100,7 @@ function initializeWebSocket(server, logger) {
     engineSocket.on('close', () => cleanupPendingConnection(engineSocket));
   });
 
+  io.use((socket, next) => {
     const engineSocket = socket.conn;
     const rawToken =
       socket.handshake?.auth?.token ||

@@ -128,31 +128,14 @@ export default function Ratings({
     })),
   ];
 
-<<<<<<< HEAD
-  const ratingUserOptions = [
-    {
-      value: user?.id || '',
-      label: `Me (${user?.email || 'Current user'})`,
-    },
-    ...team
-      .filter(
-        (m) =>
-          m.id !== user?.id &&
-          (!activeDeptId || m.department_id === activeDeptId)
-      )
-      .map((m) => ({
-=======
   const effectiveTeam = isProjectView ? roster : team;
 
   const filteredTeam = isProjectView
     ? roster
-    : team.filter(
-        (m) => !viewDepartmentId || m.department_id === viewDepartmentId
-      );
+    : team.filter((m) => !activeDeptId || m.department_id === activeDeptId);
 
   const ratingUserOptions = isProjectView
     ? roster.map((m) => ({
->>>>>>> upstream/master
         value: m.id,
         label: `${m.full_name || m.email} (${m.role})`,
       }))
@@ -304,19 +287,8 @@ export default function Ratings({
                     Department
                   </label>
 
-<<<<<<< HEAD
-                <CustomSelect
-                  value={activeDeptId}
-                  onChange={handleViewDepartmentChange}
-                  options={departmentOptions}
-                  placeholder="All departments"
-                  className="w-full"
-                  searchable={true}
-                />
-              </div>
-=======
                   <CustomSelect
-                    value={viewDepartmentId}
+                    value={activeDeptId}
                     onChange={handleViewDepartmentChange}
                     options={departmentOptions}
                     placeholder="All departments"
@@ -325,7 +297,6 @@ export default function Ratings({
                   />
                 </div>
               )}
->>>>>>> upstream/master
 
               <div>
                 <label className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">
