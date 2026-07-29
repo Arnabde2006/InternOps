@@ -347,6 +347,8 @@ describe('AI Chat Integration Tests (#498)', () => {
           full_name: 'TL Size Limit Test',
         },
       });
+      console.log('REGISTER STATUS:', regRes.statusCode);
+      console.log('REGISTER BODY:', regRes.body);
       expect(regRes.statusCode).toBe(201);
       await pool.query(
         'UPDATE users SET email_verified = TRUE WHERE email = $1',

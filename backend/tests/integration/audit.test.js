@@ -39,6 +39,11 @@ describe('Audit Integration Tests', () => {
       'SELECT id FROM users WHERE email = $1',
       [SEEDED_ADMIN_EMAIL]
     );
+    console.log(adminUserRes.rows);
+    console.log(SEEDED_ADMIN_EMAIL);
+    console.log('DATABASE_URL =', process.env.DATABASE_URL);
+    console.log('SEEDED_ADMIN_EMAIL =', SEEDED_ADMIN_EMAIL);
+    console.log('ROWS =', adminUserRes.rows);
     adminUserId = adminUserRes.rows[0].id;
 
     // Create Intern User in database

@@ -28,7 +28,6 @@ const app = Fastify({
 });
 
 // Layer 1: Register monitoring routes BEFORE global middleware to ensure observability
-const auth = require('./middleware/auth');
 
 app.get(
   '/metrics',
