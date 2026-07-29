@@ -52,11 +52,20 @@ function initializeWebSocket(server, logger) {
           : null);
 
       if (!token && req.headers['sec-websocket-protocol']) {
-        const protocols = req.headers['sec-websocket-protocol']
-          .split(',')
-          .map((p) => p.trim());
-        // Assume the token is passed as a protocol if it resembles a JWT
-        token = protocols.find((p) => p.split('.').length === 3);
+        try {
+          const protocols = req.headers['sec-websocket-protocol']
+            .split(',')
+            .map((p) => p.trim());
+          const jwtPattern = /^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$/;
+          const foundToken = protocols.find(
+            (p) => typeof p === 'string' && jwtPattern.test(p)
+          );
+          if (foundToken) {
+            token = foundToken;
+          }
+        } catch (err) {
+          log?.warn({ err }, 'Error parsing sec-websocket-protocol header');
+        }
       }
 
       if (token) {
@@ -118,13 +127,34 @@ function initializeWebSocket(server, logger) {
 
   io.use((socket, next) => {
     const engineSocket = socket.conn;
-    const rawToken =
+    let rawToken =
       socket.handshake?.auth?.token ||
       socket.handshake?.query?.token ||
       (socket.handshake?.headers?.authorization &&
       socket.handshake.headers.authorization.startsWith('Bearer ')
         ? socket.handshake.headers.authorization.split(' ')[1]
         : null);
+
+    if (!rawToken && socket.handshake?.headers?.['sec-websocket-protocol']) {
+      try {
+        const protocols = socket.handshake.headers['sec-websocket-protocol']
+          .split(',')
+          .map((p) => p.trim());
+        const jwtPattern = /^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$/;
+        const foundToken = protocols.find(
+          (p) => typeof p === 'string' && jwtPattern.test(p)
+        );
+        if (foundToken) {
+          rawToken = foundToken;
+        }
+      } catch (err) {
+        log?.warn(
+          { err },
+          'Error parsing sec-websocket-protocol header in io.use'
+        );
+      }
+    }
+
     const token = typeof rawToken === 'string' ? rawToken : '';
     const clientIp =
       socket.handshake?.headers?.['x-forwarded-for'] ||
