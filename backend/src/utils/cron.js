@@ -29,7 +29,7 @@ function scheduleSafeCronJob(schedule, jobName, task) {
 }
 function setupCronJobs() {
   try {
-   scheduleSafeCronJob('0 * * * *', 'proof-image-cleanup', async () => { 
+    scheduleSafeCronJob('0 * * * *', 'proof-image-cleanup', async () => {
       if (cleanupRunning) {
         console.warn(
           JSON.stringify({
