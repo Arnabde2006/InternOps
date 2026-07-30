@@ -92,7 +92,11 @@ function isTrustedRequestOrigin(request) {
   const candidates = [originHeader, refererHeader].filter(Boolean);
 
   if (!candidates.length) {
-    return false;
+    request.log?.warn(
+      { url: request.url, method: request.method },
+      'CSRF: no Origin or Referer header present — relying on CSRF token and bearer validation'
+    );
+    return true;
   }
 
   const trustedOrigins = new Set(getTrustedOrigins());
