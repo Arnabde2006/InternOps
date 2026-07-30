@@ -155,13 +155,6 @@ async function verifyCertificate(token) {
     };
   }
 
-  if (cert.status !== 'generated') {
-    return {
-      valid: false,
-      reason: 'Certificate has not been issued',
-    };
-  }
-
   return {
     valid: true,
     certificate: {
