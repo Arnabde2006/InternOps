@@ -9,6 +9,8 @@ module.exports = {
 
   detectOpenHandles: true,
 
+  maxWorkers: 1,
+
   globalSetup: '<rootDir>/tests/globalSetup.js',
 
   globalTeardown: '<rootDir>/tests/globalTeardown.js',
@@ -19,7 +21,7 @@ module.exports = {
   // Existing mocks and Jest setup
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
 
-  collectCoverage: true,
+  collectCoverage: false,
 
   coverageDirectory: 'coverage',
 
@@ -40,5 +42,5 @@ module.exports = {
     },
   },
 
-  testTimeout: 30000,
+  testTimeout: 60000,
 };

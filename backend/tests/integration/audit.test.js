@@ -1,5 +1,6 @@
 const app = require('../../src/app');
 const pool = require('../../src/config/db');
+console.log(process.env.SEED_ADMIN_EMAIL);
 const { v4: uuidv4 } = require('uuid');
 const argon2 = require('argon2');
 const {
@@ -39,9 +40,6 @@ describe('Audit Integration Tests', () => {
       'SELECT id FROM users WHERE email = $1',
       [SEEDED_ADMIN_EMAIL]
     );
-    console.log(adminUserRes.rows);
-    console.log(SEEDED_ADMIN_EMAIL);
-    console.log('DATABASE_URL =', process.env.DATABASE_URL);
     console.log('SEEDED_ADMIN_EMAIL =', SEEDED_ADMIN_EMAIL);
     console.log('ROWS =', adminUserRes.rows);
     adminUserId = adminUserRes.rows[0].id;
@@ -373,7 +371,6 @@ describe('Audit Integration Tests', () => {
       expect(body.data.every((log) => log.user_id === internId)).toBe(true);
       expect(body.data.some((log) => log.user_id === adminUserId)).toBe(false);
     });
-
     it("should not strip ip_address or user_agent from intern's own seeded log", async () => {
       const res = await app.inject({
         method: 'GET',
