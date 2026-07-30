@@ -165,8 +165,6 @@ class Settings(BaseSettings):
                     f"Fallback provider '{fb}' lacks a valid API key ({fb_key_attr}). It will be skipped from the active fallback chain.",
                     RuntimeWarning
                 )
-                print(f"[WARNING] Fallback provider '{fb}' lacks a valid API key ({fb_key_attr}). It will be skipped from the active fallback chain.")
-
         self.ACTIVE_FALLBACK_PROVIDERS = active_fallbacks
 
         # 4. Model Overrides & Defaults for Active Providers Only
@@ -177,14 +175,12 @@ class Settings(BaseSettings):
             if not model_val or not model_val.strip():
                 # Apply default model
                 setattr(self, model_attr, DEFAULT_MODELS[provider])
-            
             # Raise error if active provider still cannot resolve to a usable model
             resolved_model = getattr(self, model_attr, None)
             if not resolved_model or not resolved_model.strip():
                 raise ValueError(
                     f"Model validation failed: Active provider '{provider}' has no resolved model."
                 )
-
         return self
 
     def get_provider_key(self, provider: str) -> str:
