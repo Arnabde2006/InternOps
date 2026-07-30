@@ -94,6 +94,7 @@ describe('AI Provider Service', () => {
     delete process.env.AI_CACHE_TTL_MS;
     delete process.env.AI_CACHE_MAX_ENTRIES;
     delete process.env.AI_MAX_RESPONSE_BYTES;
+    delete process.env.AI_USER_CACHE_MAX;
   });
 
   it('should return a successful AI response from the primary provider', async () => {
@@ -265,36 +266,38 @@ describe('AI Provider Service', () => {
 
   it('should recover and close the circuit breaker after the cooldown period (half-open)', async () => {
     jest.useFakeTimers();
-    jest.resetModules();
-    process.env.AI_PROVIDER_ORDER = 'groq';
-    process.env.AI_PROVIDER_FAILURE_LIMIT = '2';
-    process.env.AI_PROVIDER_COOLDOWN_MS = '5000';
-    
-    mockGetRedisClient.mockResolvedValue(null);
-    mockFetch.mockRejectedValue(new Error('groq down'));
-    
-    aiService = require('../../src/services/aiProviderService');
+    try {
+      jest.resetModules();
+      process.env.AI_PROVIDER_ORDER = 'groq';
+      process.env.AI_PROVIDER_FAILURE_LIMIT = '2';
+      process.env.AI_PROVIDER_COOLDOWN_MS = '5000';
+      
+      mockGetRedisClient.mockResolvedValue(null);
+      mockFetch.mockRejectedValue(new Error('groq down'));
+      
+      aiService = require('../../src/services/aiProviderService');
 
-    await expect(aiService.generateAIResponse({ userId: 'u1', messages: [] })).rejects.toThrow();
-    await expect(aiService.generateAIResponse({ userId: 'u1', messages: [] })).rejects.toThrow();
-    
-    mockFetch.mockClear();
-    
-    await expect(aiService.generateAIResponse({ userId: 'u1', messages: [] })).rejects.toThrow();
-    expect(mockFetch).not.toHaveBeenCalled();
+      await expect(aiService.generateAIResponse({ userId: 'u1', messages: [] })).rejects.toThrow();
+      await expect(aiService.generateAIResponse({ userId: 'u1', messages: [] })).rejects.toThrow();
+      
+      mockFetch.mockClear();
+      
+      await expect(aiService.generateAIResponse({ userId: 'u1', messages: [] })).rejects.toThrow();
+      expect(mockFetch).not.toHaveBeenCalled();
 
-    jest.advanceTimersByTime(5001);
+      jest.advanceTimersByTime(5001);
 
-    mockFetch.mockResolvedValueOnce(
-      createJsonResponse({ choices: [{ message: { content: 'Recovered!' } }] })
-    );
-    
-    const result = await aiService.generateAIResponse({ userId: 'u1', messages: [{ role: 'user', content: 'hello' }] });
-    
-    expect(result.content).toBe('Recovered!');
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-
-    jest.useRealTimers();
+      mockFetch.mockResolvedValueOnce(
+        createJsonResponse({ choices: [{ message: { content: 'Recovered!' } }] })
+      );
+      
+      const result = await aiService.generateAIResponse({ userId: 'u1', messages: [{ role: 'user', content: 'hello' }] });
+      
+      expect(result.content).toBe('Recovered!');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('should skip a provider entirely if its circuit breaker is open and use the fallback', async () => {
@@ -344,11 +347,9 @@ describe('AI Provider Service', () => {
     
     aiService._caches.get = jest.fn().mockReturnValue(undefined);
     
-    try {
-      await aiService.generateAIResponse({ userId: 'cache-test-user', messages: [] });
-    } catch (e) {
-      // Suppress errors dynamically without calling external APIs
-    }
+    await expect(
+      aiService.generateAIResponse({ userId: 'cache-test-user', messages: [] })
+    ).rejects.toThrow();
     
     expect(LRUCache).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -388,6 +389,6 @@ describe('AI Provider Service', () => {
       expect(res.content).toBe('Concurrent Success');
     });
     
-    expect(mockFetch.mock.calls.length).toBeGreaterThan(0);
+    expect(mockFetch).toHaveBeenCalledTimes(10);
   });
 });
