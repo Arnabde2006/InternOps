@@ -11,6 +11,26 @@ const bounceList = new Set();
 
 const metrics = { sent: 0, failed: 0, bounced: 0, retried: 0 };
 
+// Periodically prune stale rate-limit entries to prevent unbounded memory growth
+const RATE_LIMIT_PRUNE_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
+function pruneRateLimitMap() {
+  const windowMs = config.email.rateLimitWindowMs || 60000;
+  const now = Date.now();
+  for (const [key, timestamps] of rateLimitMap.entries()) {
+    const fresh = timestamps.filter((t) => now - t < windowMs);
+    if (fresh.length === 0) {
+      rateLimitMap.delete(key);
+    } else {
+      rateLimitMap.set(key, fresh);
+    }
+  }
+}
+const rateLimitPruneTimer = setInterval(
+  pruneRateLimitMap,
+  RATE_LIMIT_PRUNE_INTERVAL_MS
+);
+rateLimitPruneTimer.unref();
+
 class EmailService {
   constructor() {
     this.transporter = null;
@@ -194,7 +214,7 @@ class EmailService {
   }
 
   async sendPasswordReset(email, resetToken) {
-    const resetLink = `${process.env.APP_URL || 'http://localhost:5173'}/reset-password#token=${encodeURIComponent(resetToken)}`;
+    const resetLink = `${config.appUrl}/reset-password#token=${encodeURIComponent(resetToken)}`;
     return this.send({
       to: email,
       subject: 'InternOps - Password Reset Request',
@@ -204,7 +224,7 @@ class EmailService {
   }
 
   async sendAccountVerification(email, verificationToken) {
-    const verifyLink = `${process.env.APP_URL || 'http://localhost:5173'}/verify-email?token=${verificationToken}`;
+    const verifyLink = `${config.appUrl}/verify-email?token=${verificationToken}`;
     return this.send({
       to: email,
       subject: 'InternOps - Verify Your Email',
