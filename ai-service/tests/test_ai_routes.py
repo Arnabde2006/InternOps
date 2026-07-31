@@ -17,7 +17,6 @@ from fastapi.testclient import TestClient
 
 from app.api.ai_routes import router
 from app.core.rate_limit import chat_rate_limiter
-from app.core.usage import _usage_by_user_day
 
 
 @pytest.fixture
@@ -26,7 +25,6 @@ def client():
     app.include_router(router)
     # reset in-memory stubs between tests so they don't bleed into each other
     chat_rate_limiter._hits.clear()
-    _usage_by_user_day.clear()
     return TestClient(app, raise_server_exceptions=False)
 
 
