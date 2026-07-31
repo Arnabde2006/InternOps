@@ -20,6 +20,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   pytest
 fastapi==0.140.0
     # via ai-service
+    pywin32; sys_platform == "win32"
 h11==0.16.0
     # via
     #   httpcore
