@@ -195,6 +195,19 @@ class Settings(BaseSettings):
                 raise ValueError(
                     f"Model validation failed: Active provider '{provider}' has no resolved model."
                 )
+
+        # 5. Cross-validate adapter availability — fail fast at startup if a
+        #    configured provider has no matching adapter implementation rather
+        #    than letting it surface as a runtime error on the first request.
+        from app.providers.registry import has_adapter
+        for provider in active_providers:
+            if not has_adapter(provider):
+                raise ValueError(
+                    f"Startup validation failed: No provider adapter implemented "
+                    f"for '{provider}'. Ensure a matching adapter exists in "
+                    f"app/providers/ and is registered in the provider registry."
+                )
+
         return self
 
     def get_provider_key(self, provider: str) -> str:
