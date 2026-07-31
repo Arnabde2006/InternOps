@@ -39,6 +39,13 @@ app.get(
     config: {
       rateLimit: false,
     },
+    preHandler: async (req, reply) => {
+      const authHeader = req.headers['authorization'];
+      const expectedToken = `Bearer ${process.env.METRICS_TOKEN}`;
+      if (authHeader !== expectedToken) {
+        return reply.status(404).send();
+      }
+    },
   },
   metrics.metricsEndpoint
 );
