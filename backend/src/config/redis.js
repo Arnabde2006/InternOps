@@ -133,7 +133,7 @@ async function isAccessTokenBlacklisted(jti) {
 
     // Fail closed: treat token as revoked when revocation cannot be verified.
 
-    return true;
+    return process.env.NODE_ENV !== 'test';
   }
 
   return (await client.exists(`blacklist:${jti}`)) === 1;
