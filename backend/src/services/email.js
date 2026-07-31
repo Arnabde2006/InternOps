@@ -116,8 +116,8 @@ class EmailService {
         .replace(/\{\{#if (\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, k, content) =>
           data[k]
             ? content.replace(/\{\{(\w+)\}\}/g, (__, kk) =>
-              data[kk] != null ? data[kk] : ''
-            )
+                data[kk] != null ? data[kk] : ''
+              )
             : ''
         );
     };
@@ -130,9 +130,9 @@ class EmailService {
   _stripHtml(html) {
     return html
       ? html
-        .replace(/<[^>]*>/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
+          .replace(/<[^>]*>/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
       : '';
   }
 
