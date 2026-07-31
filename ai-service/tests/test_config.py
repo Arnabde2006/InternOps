@@ -4,6 +4,8 @@ import importlib
 import pytest
 from unittest import mock
 
+from pydantic_settings import SettingsConfigDict
+
 # Ensure ai-service root is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -39,11 +41,17 @@ def test_success_single_provider():
     assert cfg.FALLBACK_AI_PROVIDERS == ["groq", "openai", "anthropic"]
     assert cfg.ACTIVE_FALLBACK_PROVIDERS == []
 
-def test_startup_fail_zero_providers():
-    # No keys are configured
+
+def test_startup_fail_zero_providers(monkeypatch):
+    import importlib
+    import app.core.config as config
+
+    monkeypatch.setenv("PRIMARY_AI_PROVIDER", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+
     with pytest.raises(Exception) as exc_info:
-        reload_config()
-    
+        importlib.reload(config)
+
     assert "Startup validation failed" in str(exc_info.value)
 
 def test_invalid_primary_provider():

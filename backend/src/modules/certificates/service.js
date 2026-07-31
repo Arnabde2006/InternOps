@@ -179,6 +179,12 @@ async function deleteCertificate(id) {
   return repo.deleteCertificate(id);
 }
 
+async function revokeCertificate(id, reason = null) {
+  const cert = await repo.getCertificateById(id);
+  if (!cert) return null;
+  return repo.revokeCertificate(id, reason);
+}
+
 // ============================================================
 // Bulk Generation Service
 // ============================================================
@@ -475,6 +481,7 @@ module.exports = {
   getCertificate,
   verifyCertificate,
   deleteCertificate,
+  revokeCertificate,
   startBulkGeneration,
   getBulkJobStatus,
   generateAIContent,
