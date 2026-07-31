@@ -12,6 +12,7 @@ from app.providers.groq import GroqProvider
 from app.providers.anthropic import AnthropicProvider
 from app.providers.deepseek import DeepSeekProvider
 from app.providers.huggingface import HuggingFaceProvider
+from app.providers.orchestrator import AIOrchestrator, ai_orchestrator
 
 __all__ = [
     "BaseAIProvider",
@@ -25,4 +26,6 @@ __all__ = [
     "AnthropicProvider",
     "DeepSeekProvider",
     "HuggingFaceProvider",
+    "AIOrchestrator",
+    "ai_orchestrator",
 ]
