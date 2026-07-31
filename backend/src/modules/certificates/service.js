@@ -142,6 +142,13 @@ async function verifyCertificate(token) {
     return null;
   }
 
+  if (cert.status !== 'generated') {
+    return {
+      valid: false,
+      reason: 'Certificate has not been issued',
+    };
+  }
+
   if (cert.revoked_at) {
     return {
       valid: false,
