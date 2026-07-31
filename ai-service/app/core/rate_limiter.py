@@ -62,8 +62,8 @@ class RateLimiter:
         # Use the cryptographically verified user id from the JWT.
         # Falls back to client IP only as a last resort (should never happen
         # since get_current_user already enforces auth).
-        client_id = current_user.id if current_user else (
-            request.client.host if request.client else "unknown"
+        client_id = current_user.id if isinstance(current_user, User) else (
+            request.client.host if (request and getattr(request, "client", None)) else "unknown"
         )
 
         # ------------------------------------------------------------------
