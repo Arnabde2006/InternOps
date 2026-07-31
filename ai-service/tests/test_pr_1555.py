@@ -73,8 +73,10 @@ def test_settings_validation_invalid_cooldown():
         Settings(AI_PROVIDER_COOLDOWN_MS="invalid")
     assert "AI_PROVIDER_COOLDOWN_MS must be a valid number" in str(exc.value)
 
-def test_settings_validation_valid():
-    cfg = Settings(AI_PROVIDER_FAILURE_LIMIT="5", AI_PROVIDER_COOLDOWN_MS="60000")
+def test_settings_validation_valid(monkeypatch):
+    monkeypatch.setenv("PRIMARY_AI_PROVIDER", "gemini")
+    monkeypatch.setenv("FALLBACK_AI_PROVIDERS", "groq,openai")
+    cfg = Settings(PRIMARY_AI_PROVIDER="gemini", GEMINI_API_KEY="valid_key", AI_PROVIDER_FAILURE_LIMIT="5", AI_PROVIDER_COOLDOWN_MS="60000")
     assert cfg.AI_PROVIDER_FAILURE_LIMIT == 5
     assert cfg.AI_PROVIDER_COOLDOWN_MS == 60000.0
 

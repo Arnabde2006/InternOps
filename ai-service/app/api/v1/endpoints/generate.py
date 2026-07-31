@@ -1,24 +1,31 @@
-<<<<<<< HEAD
 from fastapi import APIRouter, Depends, HTTPException, status
+from app.core.auth import User, get_current_user
 from app.core.rate_limiter import ai_rate_limiter
 from app.providers.orchestrator import ai_orchestrator
 from app.providers.base import AIProviderError, ProviderAPIError, ProviderRateLimitError
 
 router = APIRouter()
 
+
 @router.post(
     "/generate",
     dependencies=[Depends(ai_rate_limiter.check_rate_limit)],
 )
-async def generate_ai_content(payload: dict):
+async def generate_ai_content(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+):
     """
     Generate AI content using the orchestrator with failover and circuit breaker.
+
+    Requires a valid JWT in the Authorization header.
+    Rate-limited per verified user id.
     """
     prompt = payload.get("prompt") or payload.get("user_input")
     if not prompt:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Prompt or user_input is required in payload"
+            detail="Prompt or user_input is required in payload",
         )
 
     try:
@@ -27,6 +34,7 @@ async def generate_ai_content(payload: dict):
             "status": "success",
             "provider": provider_name,
             "content": content,
+            "user_id": current_user.id,
         }
     except ProviderRateLimitError:
         raise HTTPException(
@@ -48,32 +56,3 @@ async def generate_ai_content(payload: dict):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"AI service unavailable: {str(e)}",
         )
-=======
-from fastapi import APIRouter, Depends
-
-from app.core.auth import User, get_current_user
-from app.core.rate_limiter import ai_rate_limiter
-
-router = APIRouter()
-
-
-@router.post(
-    "/generate",
-    dependencies=[Depends(ai_rate_limiter.check_rate_limit)],
-)
-async def generate_ai_content(
-    payload: dict,
-    current_user: User = Depends(get_current_user),
-):
-    """
-    AI generation endpoint.
-
-    Requires a valid JWT in the Authorization header.
-    Rate-limited per verified user id (not a spoofable header).
-    """
-    return {
-        "message": "AI request accepted.",
-        "payload": payload,
-        "user_id": current_user.id,
-    }
->>>>>>> origin/master
