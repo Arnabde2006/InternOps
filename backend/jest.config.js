@@ -25,5 +25,11 @@ module.exports = {
       statements: 40,
     },
   },
-  testTimeout: 60000,
+  // ✅ Pick a consistent timeout (30s is fine for CI, but you can raise if needed)
+  testTimeout: 30000,
+
+  // 👇 Added mapping so tests don’t fail when ai-service is missing
+  moduleNameMapper: {
+    '^../../../ai-service/(.*)$': '<rootDir>/tests/__mocks__/ai-service/$1',
+  },
 };
