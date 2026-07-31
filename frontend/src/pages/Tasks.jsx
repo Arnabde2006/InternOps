@@ -292,7 +292,7 @@ export default function Tasks() {
   return (
     <div className="animate-fade-in-up">
       {/* Admin Department Navigation Context Banner */}
-      {isAdmin && activeDeptId && (
+      {isAdmin && activeDeptId && !isProjectView && (
         <div className="mb-6 p-4 rounded-3xl bg-gradient-to-r from-slate-900 to-indigo-950 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-indigo-500/20 animate-fade-in">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
