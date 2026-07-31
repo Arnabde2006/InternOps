@@ -22,6 +22,7 @@ def clean_and_parse_json(raw_response: str) -> Dict[str, Any]:
         # Graceful fallback to avoid crashing the backend
         return {
             "score": None,
+            "reason": "Parsing failed. Response contained invalid JSON.",
             "feedback": "Parsing failed. Response contained invalid JSON.",
             "suggestions": "Please retry or check prompt formatting."
         }

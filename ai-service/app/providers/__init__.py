@@ -12,7 +12,14 @@ from app.providers.groq import GroqProvider
 from app.providers.anthropic import AnthropicProvider
 from app.providers.deepseek import DeepSeekProvider
 from app.providers.huggingface import HuggingFaceProvider
-from app.providers.orchestrator import AIOrchestrator, ai_orchestrator
+
+
+def __getattr__(name: str):
+    if name in ("AIOrchestrator", "ai_orchestrator"):
+        from app.providers.orchestrator import AIOrchestrator, ai_orchestrator
+        return AIOrchestrator if name == "AIOrchestrator" else ai_orchestrator
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 __all__ = [
     "BaseAIProvider",

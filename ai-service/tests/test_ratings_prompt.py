@@ -1,5 +1,5 @@
 import pytest
-from ai_service.app.utils.prompt_cleaner import clean_and_parse_json
+from app.utils.prompt_cleaner import clean_and_parse_json
 
 def test_clean_and_parse_valid_json():
     response = '{"score": 9, "reason": "Strong attendance and verified tasks"}'
