@@ -103,6 +103,7 @@ export default function ResetPassword() {
                 <input
                   type="password"
                   placeholder="New password (min 8)"
+                  autoComplete="new-password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required

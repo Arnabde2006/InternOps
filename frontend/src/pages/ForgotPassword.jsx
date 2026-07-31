@@ -82,6 +82,7 @@ export default function ForgotPassword() {
                 <input
                   type="email"
                   placeholder="you@example.com"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={forgotMut.isPending}
