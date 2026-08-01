@@ -36,7 +36,8 @@ export default function RatingForm({ roster, departmentId: propDeptId }) {
 
   const { data: suggestion, isLoading: suggestionLoading } = useQuery({
     queryKey: ['ratingSuggestion', userId],
-    queryFn: () => api.get(`/ratings/suggestions/${userId}`).then((res) => res.data),
+    queryFn: () =>
+      api.get(`/ratings/suggestions/${userId}`).then((res) => res.data),
     enabled: !!userId,
   });
 
@@ -105,7 +106,9 @@ export default function RatingForm({ roster, departmentId: propDeptId }) {
     : [
         {
           value: '',
-          label: departmentId ? 'Select member...' : 'Select department first...',
+          label: departmentId
+            ? 'Select member...'
+            : 'Select department first...',
         },
         ...reports
           .filter((u) => u.department_id === departmentId)
@@ -115,7 +118,8 @@ export default function RatingForm({ roster, departmentId: propDeptId }) {
           })),
       ];
 
-  const selectedUserLabel = memberOptions.find((opt) => opt.value === userId)?.label || 'this member';
+  const selectedUserLabel =
+    memberOptions.find((opt) => opt.value === userId)?.label || 'this member';
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -133,54 +137,60 @@ export default function RatingForm({ roster, departmentId: propDeptId }) {
       setIsModalOpen(false);
     }
   };
-  const confirmModal = isModalOpen && createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-      onClick={handleBackdropClick}
-    >
+  const confirmModal =
+    isModalOpen &&
+    createPortal(
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="rating-confirm-title"
-        className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-2xl transition-all border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        onClick={handleBackdropClick}
       >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-100 dark:border-amber-900/40 text-lg">
-            ⚠️
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="rating-confirm-title"
+          className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-2xl transition-all border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-100 dark:border-amber-900/40 text-lg">
+              ⚠️
+            </div>
+            <h3
+              id="rating-confirm-title"
+              className="text-lg font-extrabold text-slate-900 dark:text-white"
+            >
+              Confirm Rating Submission
+            </h3>
           </div>
-          <h3 id="rating-confirm-title" className="text-lg font-extrabold text-slate-900 dark:text-white">
-            Confirm Rating Submission
-          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+            Are you sure you want to submit a score of{' '}
+            <strong className="text-indigo-600 dark:text-indigo-400">
+              {score}/10
+            </strong>{' '}
+            for <strong>{selectedUserLabel}</strong>? Ratings are permanent and
+            immutable.
+          </p>
+          <div className="flex items-center justify-end gap-3">
+            <Btn
+              type="button"
+              variant="ghost"
+              onClick={() => setIsModalOpen(false)}
+              className="rounded-2xl px-4 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </Btn>
+            <Btn
+              type="button"
+              variant="success"
+              onClick={handleConfirmSubmit}
+              className="rounded-2xl px-5 py-2 text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
+            >
+              Confirm Submit
+            </Btn>
+          </div>
         </div>
-        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
-          Are you sure you want to submit a score of{' '}
-          <strong className="text-indigo-600 dark:text-indigo-400">
-            {score}/10
-          </strong>{' '}
-          for <strong>{selectedUserLabel}</strong>? Ratings are permanent and immutable.
-        </p>
-        <div className="flex items-center justify-end gap-3">
-          <Btn
-            type="button"
-            variant="ghost"
-            onClick={() => setIsModalOpen(false)}
-            className="rounded-2xl px-4 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            Cancel
-          </Btn>
-          <Btn
-            type="button"
-            variant="success"
-            onClick={handleConfirmSubmit}
-            className="rounded-2xl px-5 py-2 text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
-          >
-            Confirm Submit
-          </Btn>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
+      </div>,
+      document.body
+    );
 
   return (
     <Card className="p-6 md:p-7 mb-6 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:shadow-none">
@@ -209,7 +219,10 @@ export default function RatingForm({ roster, departmentId: propDeptId }) {
         </div>
       )}
 
-      <RatingSuggestionCard suggestion={suggestion} loading={suggestionLoading} />
+      <RatingSuggestionCard
+        suggestion={suggestion}
+        loading={suggestionLoading}
+      />
 
       <form onSubmit={handleFormSubmit} className="space-y-5">
         {!roster && (
@@ -241,8 +254,8 @@ export default function RatingForm({ roster, departmentId: propDeptId }) {
               roster
                 ? 'Select member...'
                 : departmentId
-                ? 'Select member...'
-                : 'Select department first...'
+                  ? 'Select member...'
+                  : 'Select department first...'
             }
             className="w-full"
             disabled={rateMutation.isPending || (!roster && !departmentId)}
@@ -275,8 +288,8 @@ export default function RatingForm({ roster, departmentId: propDeptId }) {
                     score === n
                       ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white border-transparent shadow-lg shadow-indigo-200/60 dark:shadow-none'
                       : n < score
-                      ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-100 dark:border-indigo-900/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50'
-                      : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-100 dark:border-indigo-900/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50'
+                        : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                   aria-label={`Set rating ${n} out of 10`}
                 >
@@ -316,7 +329,9 @@ export default function RatingForm({ roster, departmentId: propDeptId }) {
           disabled={rateMutation.isPending || !userId}
           className="rounded-2xl px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:shadow-emerald-200 dark:hover:shadow-none"
         >
-          {rateMutation.isPending ? 'Submitting...' : `Submit ${score}/10 rating`}
+          {rateMutation.isPending
+            ? 'Submitting...'
+            : `Submit ${score}/10 rating`}
         </Btn>
       </form>
 
