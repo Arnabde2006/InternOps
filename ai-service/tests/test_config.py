@@ -3,7 +3,6 @@ import sys
 import importlib
 import pytest
 from unittest import mock
-
 from pydantic_settings import SettingsConfigDict
 
 # Ensure ai-service root is in sys.path
@@ -48,7 +47,6 @@ def test_success_single_provider():
     # Fallback configuration options are preserved but active filtered out
     assert cfg.FALLBACK_AI_PROVIDERS == ["groq", "openai", "anthropic"]
     assert cfg.ACTIVE_FALLBACK_PROVIDERS == []
-
 
 def test_startup_fail_zero_providers(monkeypatch):
     import importlib
