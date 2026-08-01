@@ -142,7 +142,7 @@ def test_model_validation_and_defaults():
 
     # Don't set models, they should resolve to default values
     cfg = reload_config()
-    assert cfg.GEMINI_MODEL == "gemini-2.5-flash"
+    assert cfg.GEMINI_MODEL == "gemini-2.0-flash"
     assert cfg.GROQ_MODEL == "llama-3.3-70b-versatile"
 
     # Set override for gemini model
