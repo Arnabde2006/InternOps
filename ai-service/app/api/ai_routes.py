@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from ..core.auth import User, get_current_user
 from ..core.rate_limit import enforce_rate_limit
 from ..core.rbac import require_roles
+from ..core.cache import cache_key, get_or_set
 from ..core.usage import (
     DAILY_AI_LIMIT,
     get_daily_usage_report,
@@ -67,11 +68,32 @@ def _messages_to_prompt(messages: List[dict]) -> str:
 
 async def call_provider(user_id: str, messages: List[dict]) -> ProviderResult:
     provider = get_provider()
+
     prompt = _messages_to_prompt(messages)
-    content = await provider.generate_text(prompt)
+
+    temperature = 0.7
+
+    key = cache_key(
+        provider=provider.provider_name,
+        model=provider.model_name,
+        prompt=prompt,
+        temperature=temperature,
+    )
+
+    async def compute():
+        return await provider.generate_text(
+            prompt,
+            temperature=temperature,
+        )
+
+    content, cached = await get_or_set(
+        key=key,
+        compute=compute,
+    )
+
     return ProviderResult(
         provider=provider.provider_name,
-        cached=False,  # TODO(caching): no caching layer wired up yet
+        cached=cached,
         content=content,
     )
 

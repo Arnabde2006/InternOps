@@ -92,6 +92,7 @@ class Settings(BaseSettings):
     AI_SERVICE_HOST: str = "0.0.0.0"
     AI_SERVICE_PORT: int = 8000
     REDIS_URL: Optional[str] = None
+    AI_CACHE_TTL: int = 3600
 
     @field_validator("PRIMARY_AI_PROVIDER", mode="before")
     @classmethod
