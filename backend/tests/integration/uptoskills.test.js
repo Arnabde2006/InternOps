@@ -6,6 +6,7 @@ const {
   parseSetCookie,
   mergeCookies,
 } = require('./helpers');
+const { generateAccessToken } = require('../../src/utils/tokens');
 
 describe('UptoSkills Integration Tests', () => {
   let csrfToken;
@@ -58,6 +59,21 @@ describe('UptoSkills Integration Tests', () => {
         url: '/api/v1/uptoskills/sync-status',
       });
       expect([401, 403]).toContain(res.statusCode);
+    });
+
+    it('should forbid authenticated non-admin users', async () => {
+      const internToken = generateAccessToken({
+        id: '00000000-0000-4000-8000-000000000002',
+        role: 'INTERN',
+      });
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/uptoskills/sync-status',
+        headers: { Authorization: `Bearer ${internToken}` },
+      });
+
+      expect(res.statusCode).toBe(403);
+      expect(JSON.parse(res.body)).toEqual({ error: 'Forbidden' });
     });
 
     it('should return 501 Not Implemented', async () => {
