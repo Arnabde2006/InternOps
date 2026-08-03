@@ -8,13 +8,7 @@ if (!moduleName) {
   process.exit(1);
 }
 
-const moduleDir = path.join(
-  __dirname,
-  '..',
-  'src',
-  'modules',
-  moduleName
-);
+const moduleDir = path.join(__dirname, '..', 'src', 'modules', moduleName);
 
 if (fs.existsSync(moduleDir)) {
   console.error(`Module "${moduleName}" already exists.`);
