@@ -97,6 +97,7 @@ class Settings(BaseSettings):
     AI_SERVICE_PORT: int = 8000
     DATABASE_URL: Optional[str] = None
     REDIS_URL: Optional[str] = None
+    AI_CACHE_TTL: int = 3600
 
     # Circuit Breaker Configuration
     AI_PROVIDER_FAILURE_LIMIT: int = 3
