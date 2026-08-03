@@ -13,7 +13,8 @@
     "test:coverage": "cross-env NODE_ENV=test LOG_LEVEL=silent jest --config jest.config.js --runInBand --coverage --testTimeout=60000",
     "format": "prettier --write .",
     "lint": "eslint .",
-    "lint:db": "node scripts/lint-db.js"
+    "lint:db": "node scripts/lint-db.js",
+    "generate:module": "node scripts/generate-module.js"
   },
   "dependencies": {
     "@fastify/compress": "^9.0.0",
