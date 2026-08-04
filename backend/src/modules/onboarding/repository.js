@@ -189,14 +189,7 @@ async function createChecklist({
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
       `,
-      [
-        internId,
-        templateId,
-        title,
-        role,
-        departmentId || null,
-        assignedBy,
-      ]
+      [internId, templateId, title, role, departmentId || null, assignedBy]
     );
 
     const checklist = checklistResult.rows[0];

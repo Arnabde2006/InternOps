@@ -1,26 +1,18 @@
 const auth = require('../../middleware/auth');
 const rbac = require('../../middleware/rbac');
-const {
-  generateAIResponse,
-} = require('../../services/aiProviderService');
+const { generateAIResponse } = require('../../services/aiProviderService');
 const onboardingRepo = require('./repository');
 
 function normalizeItem(item) {
   return {
     title: item.title,
-    description:
-      typeof item.description === 'string'
-        ? item.description
-        : '',
+    description: typeof item.description === 'string' ? item.description : '',
     dueDayOffset:
-      Number.isInteger(item.dueDayOffset) &&
-      item.dueDayOffset >= 0
+      Number.isInteger(item.dueDayOffset) && item.dueDayOffset >= 0
         ? item.dueDayOffset
         : null,
     socialTaskId:
-      typeof item.socialTaskId === 'string'
-        ? item.socialTaskId
-        : null,
+      typeof item.socialTaskId === 'string' ? item.socialTaskId : null,
   };
 }
 
@@ -46,14 +38,10 @@ async function routes(fastify) {
   fastify.post(
     '/generate',
     {
-      preHandler: [
-        auth,
-        rbac('ADMIN', 'SENIOR_TL', 'TL'),
-      ],
+      preHandler: [auth, rbac('ADMIN', 'SENIOR_TL', 'TL')],
       schema: {
         tags: ['Onboarding'],
-        description:
-          'Generate an AI-assisted onboarding checklist',
+        description: 'Generate an AI-assisted onboarding checklist',
       },
     },
     async (req, reply) => {
@@ -189,23 +177,14 @@ Requirements:
   fastify.post(
     '/templates',
     {
-      preHandler: [
-        auth,
-        rbac('ADMIN', 'SENIOR_TL'),
-      ],
+      preHandler: [auth, rbac('ADMIN', 'SENIOR_TL')],
       schema: {
         tags: ['Onboarding'],
-        description:
-          'Save an onboarding checklist as a reusable template',
+        description: 'Save an onboarding checklist as a reusable template',
       },
     },
     async (req, reply) => {
-      const {
-        title,
-        role,
-        departmentId,
-        items,
-      } = req.body || {};
+      const { title, role, departmentId, items } = req.body || {};
 
       if (
         typeof title !== 'string' ||
@@ -225,22 +204,17 @@ Requirements:
       }
 
       try {
-        const template =
-          await onboardingRepo.createTemplate({
-            title: title.trim(),
-            role: role.trim(),
-            departmentId:
-              departmentId || req.user.departmentId || null,
-            createdBy: req.user.id,
-            items: items.map(normalizeItem),
-          });
+        const template = await onboardingRepo.createTemplate({
+          title: title.trim(),
+          role: role.trim(),
+          departmentId: departmentId || req.user.departmentId || null,
+          createdBy: req.user.id,
+          items: items.map(normalizeItem),
+        });
 
         return reply.status(201).send(template);
       } catch (error) {
-        req.log.error(
-          { err: error },
-          'Failed to create onboarding template'
-        );
+        req.log.error({ err: error }, 'Failed to create onboarding template');
 
         return reply.status(500).send({
           error: 'Failed to save onboarding template',
@@ -256,36 +230,26 @@ Requirements:
   fastify.get(
     '/templates/match',
     {
-      preHandler: [
-        auth,
-        rbac('ADMIN', 'SENIOR_TL', 'TL'),
-      ],
+      preHandler: [auth, rbac('ADMIN', 'SENIOR_TL', 'TL')],
       schema: {
         tags: ['Onboarding'],
-        description:
-          'Find a reusable onboarding template',
+        description: 'Find a reusable onboarding template',
       },
     },
     async (req, reply) => {
       const { role, departmentId } = req.query || {};
 
-      if (
-        typeof role !== 'string' ||
-        !role.trim()
-      ) {
+      if (typeof role !== 'string' || !role.trim()) {
         return reply.status(400).send({
           error: 'role is required',
         });
       }
 
       try {
-        const template =
-          await onboardingRepo.findTemplate(
-            role.trim(),
-            departmentId ||
-              req.user.departmentId ||
-              null
-          );
+        const template = await onboardingRepo.findTemplate(
+          role.trim(),
+          departmentId || req.user.departmentId || null
+        );
 
         if (!template) {
           return reply.status(404).send({
@@ -295,10 +259,7 @@ Requirements:
 
         return template;
       } catch (error) {
-        req.log.error(
-          { err: error },
-          'Failed to find onboarding template'
-        );
+        req.log.error({ err: error }, 'Failed to find onboarding template');
 
         return reply.status(500).send({
           error: 'Failed to retrieve onboarding template',
@@ -313,22 +274,17 @@ Requirements:
   fastify.get(
     '/templates/:templateId',
     {
-      preHandler: [
-        auth,
-        rbac('ADMIN', 'SENIOR_TL', 'TL'),
-      ],
+      preHandler: [auth, rbac('ADMIN', 'SENIOR_TL', 'TL')],
       schema: {
         tags: ['Onboarding'],
-        description:
-          'Get an onboarding template by ID',
+        description: 'Get an onboarding template by ID',
       },
     },
     async (req, reply) => {
       try {
-        const template =
-          await onboardingRepo.getTemplateById(
-            req.params.templateId
-          );
+        const template = await onboardingRepo.getTemplateById(
+          req.params.templateId
+        );
 
         if (!template) {
           return reply.status(404).send({
@@ -338,10 +294,7 @@ Requirements:
 
         return template;
       } catch (error) {
-        req.log.error(
-          { err: error },
-          'Failed to retrieve onboarding template'
-        );
+        req.log.error({ err: error }, 'Failed to retrieve onboarding template');
 
         return reply.status(500).send({
           error: 'Failed to retrieve onboarding template',
@@ -357,25 +310,15 @@ Requirements:
   fastify.post(
     '/checklists',
     {
-      preHandler: [
-        auth,
-        rbac('ADMIN', 'SENIOR_TL', 'TL'),
-      ],
+      preHandler: [auth, rbac('ADMIN', 'SENIOR_TL', 'TL')],
       schema: {
         tags: ['Onboarding'],
-        description:
-          'Attach an onboarding checklist to an intern',
+        description: 'Attach an onboarding checklist to an intern',
       },
     },
     async (req, reply) => {
-      const {
-        internId,
-        templateId,
-        title,
-        role,
-        departmentId,
-        items,
-      } = req.body || {};
+      const { internId, templateId, title, role, departmentId, items } =
+        req.body || {};
 
       if (
         !internId ||
@@ -396,26 +339,19 @@ Requirements:
       }
 
       try {
-        const checklist =
-          await onboardingRepo.createChecklist({
-            internId,
-            templateId: templateId || null,
-            title: title.trim(),
-            role: role.trim(),
-            departmentId:
-              departmentId ||
-              req.user.departmentId ||
-              null,
-            assignedBy: req.user.id,
-            items: items.map(normalizeItem),
-          });
+        const checklist = await onboardingRepo.createChecklist({
+          internId,
+          templateId: templateId || null,
+          title: title.trim(),
+          role: role.trim(),
+          departmentId: departmentId || req.user.departmentId || null,
+          assignedBy: req.user.id,
+          items: items.map(normalizeItem),
+        });
 
         return reply.status(201).send(checklist);
       } catch (error) {
-        req.log.error(
-          { err: error },
-          'Failed to attach onboarding checklist'
-        );
+        req.log.error({ err: error }, 'Failed to attach onboarding checklist');
 
         return reply.status(500).send({
           error: 'Failed to attach onboarding checklist',
@@ -438,16 +374,14 @@ Requirements:
       preHandler: [auth],
       schema: {
         tags: ['Onboarding'],
-        description:
-          'Get an onboarding checklist',
+        description: 'Get an onboarding checklist',
       },
     },
     async (req, reply) => {
       try {
-        const checklist =
-          await onboardingRepo.getChecklistById(
-            req.params.checklistId
-          );
+        const checklist = await onboardingRepo.getChecklistById(
+          req.params.checklistId
+        );
 
         if (!checklist) {
           return reply.status(404).send({
@@ -455,26 +389,15 @@ Requirements:
           });
         }
 
-        const privilegedRoles = [
-          'ADMIN',
-          'SENIOR_TL',
-          'TL',
-        ];
+        const privilegedRoles = ['ADMIN', 'SENIOR_TL', 'TL'];
 
-        const isIntern =
-          checklist.intern_id === req.user.id;
+        const isIntern = checklist.intern_id === req.user.id;
 
-        const isDirectManager =
-          checklist.manager_id === req.user.id;
+        const isDirectManager = checklist.manager_id === req.user.id;
 
-        const isPrivileged =
-          privilegedRoles.includes(req.user.role);
+        const isPrivileged = privilegedRoles.includes(req.user.role);
 
-        if (
-          !isIntern &&
-          !isDirectManager &&
-          !isPrivileged
-        ) {
+        if (!isIntern && !isDirectManager && !isPrivileged) {
           return reply.status(403).send({
             error: 'Forbidden',
           });
@@ -503,18 +426,13 @@ Requirements:
       preHandler: [auth],
       schema: {
         tags: ['Onboarding'],
-        description:
-          'Get onboarding checklists for an intern',
+        description: 'Get onboarding checklists for an intern',
       },
     },
     async (req, reply) => {
       const { internId } = req.params;
 
-      const privilegedRoles = [
-        'ADMIN',
-        'SENIOR_TL',
-        'TL',
-      ];
+      const privilegedRoles = ['ADMIN', 'SENIOR_TL', 'TL'];
 
       if (
         req.user.id !== internId &&
@@ -526,9 +444,7 @@ Requirements:
       }
 
       try {
-        return await onboardingRepo.getChecklistsForIntern(
-          internId
-        );
+        return await onboardingRepo.getChecklistsForIntern(internId);
       } catch (error) {
         req.log.error(
           { err: error },
@@ -536,8 +452,7 @@ Requirements:
         );
 
         return reply.status(500).send({
-          error:
-            'Failed to retrieve onboarding checklists',
+          error: 'Failed to retrieve onboarding checklists',
         });
       }
     }
@@ -553,8 +468,7 @@ Requirements:
       preHandler: [auth],
       schema: {
         tags: ['Onboarding'],
-        description:
-          'Update onboarding checklist item completion',
+        description: 'Update onboarding checklist item completion',
       },
     },
     async (req, reply) => {
@@ -567,10 +481,9 @@ Requirements:
       }
 
       try {
-        const checklist =
-          await onboardingRepo.getChecklistById(
-            req.params.checklistId
-          );
+        const checklist = await onboardingRepo.getChecklistById(
+          req.params.checklistId
+        );
 
         if (!checklist) {
           return reply.status(404).send({
@@ -578,37 +491,25 @@ Requirements:
           });
         }
 
-        const privilegedRoles = [
-          'ADMIN',
-          'SENIOR_TL',
-          'TL',
-        ];
+        const privilegedRoles = ['ADMIN', 'SENIOR_TL', 'TL'];
 
-        const isIntern =
-          checklist.intern_id === req.user.id;
+        const isIntern = checklist.intern_id === req.user.id;
 
-        const isDirectManager =
-          checklist.manager_id === req.user.id;
+        const isDirectManager = checklist.manager_id === req.user.id;
 
-        const isPrivileged =
-          privilegedRoles.includes(req.user.role);
+        const isPrivileged = privilegedRoles.includes(req.user.role);
 
-        if (
-          !isIntern &&
-          !isDirectManager &&
-          !isPrivileged
-        ) {
+        if (!isIntern && !isDirectManager && !isPrivileged) {
           return reply.status(403).send({
             error: 'Forbidden',
           });
         }
 
-        const item =
-          await onboardingRepo.updateChecklistItemCompletion({
-            itemId: req.params.itemId,
-            checklistId: req.params.checklistId,
-            completed,
-          });
+        const item = await onboardingRepo.updateChecklistItemCompletion({
+          itemId: req.params.itemId,
+          checklistId: req.params.checklistId,
+          completed,
+        });
 
         if (!item) {
           return reply.status(404).send({
