@@ -12,7 +12,8 @@
     "test:debug": "cross-env NODE_ENV=test LOG_LEVEL=silent jest --config jest.config.js --runInBand --detectOpenHandles --testTimeout=60000",
     "test:coverage": "cross-env NODE_ENV=test LOG_LEVEL=silent jest --config jest.config.js --runInBand --coverage --testTimeout=60000",
     "format": "prettier --write .",
-    "lint": "eslint .",
+    "lint": "eslint . && node scripts/lint-modules.js",
+    "lint:modules": "node scripts/lint-modules.js",
     "lint:db": "node scripts/lint-db.js",
     "generate:module": "node scripts/generate-module.js"
   },
