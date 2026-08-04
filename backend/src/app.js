@@ -32,44 +32,38 @@ const app = Fastify({
 });
 
 // Layer 1: Register monitoring routes BEFORE global middleware to ensure observability
-app.get(
-  '/metrics',
-  {
-    preHandler: [auth, rbac('ADMIN')],
-    config: {
-      rateLimit: false,
-    },
-    preHandler: async (req, reply) => {
-      const authHeader = req.headers['authorization'];
-      const expectedToken = `Bearer ${process.env.METRICS_TOKEN}`;
-      if (authHeader !== expectedToken) {
-        return reply.status(404).send();
-      }
-    },
-  },
-  metrics.metricsEndpoint
-);
-
-app.get(
-  '/health',
-  {
-    config: {
-      rateLimit: false,
-    },
-  },
+preHandler: ([
+  auth,
+  rbac('ADMIN'),
   async (req, reply) => {
-    const redisStatus = getRedisStatus();
-    if (process.env.NODE_ENV === 'test') {
+    const authHeader = req.headers.authorization;
+    const expectedToken = `Bearer ${process.env.METRICS_TOKEN}`;
+
+    if (authHeader !== expectedToken) {
+      return reply.status(404).send();
+    }
+  },
+],
+  app.get(
+    '/health',
+    {
+      config: {
+        rateLimit: false,
+      },
+    },
+    async (req, reply) => {
+      const redisStatus = getRedisStatus();
+      if (process.env.NODE_ENV === 'test') {
+        return reply.send({ status: 'ok' });
+      }
+      if (redisStatus === 'disconnected') {
+        return reply
+          .status(503)
+          .send({ status: 'degraded', redis: 'disconnected' });
+      }
       return reply.send({ status: 'ok' });
     }
-    if (redisStatus === 'disconnected') {
-      return reply
-        .status(503)
-        .send({ status: 'degraded', redis: 'disconnected' });
-    }
-    return reply.send({ status: 'ok' });
-  }
-);
+  ));
 
 app.get(
   '/health/db',
