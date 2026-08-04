@@ -51,12 +51,13 @@ function updateJar(res) {
 }
 
 function inject(method, url, opts = {}) {
+  const hasBody = opts.payload !== undefined;
   return app.inject({
     method,
     url,
     cookies: { ...cookies, ...(opts.cookies || {}) },
     headers: {
-      'Content-Type': 'application/json',
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
       'X-CSRF-Token': csrfToken,
       Origin: 'http://localhost:5173',
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
