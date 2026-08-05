@@ -502,7 +502,8 @@ async function routes(fastify) {
       // Prevent changing own password here
       if (req.params.id === req.user.id) {
         return reply.status(400).send({
-          error: 'Please use the profile settings page to change your own password.',
+          error:
+            'Please use the profile settings page to change your own password.',
         });
       }
 
