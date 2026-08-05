@@ -280,6 +280,9 @@ if (process.env.NODE_ENV !== 'test') {
 
 app.register(require('./routes'), { prefix: '/api/v1' });
 app.register(require('./routes.v2'), { prefix: '/api/v2' });
+app.register(require('./modules/github-sync/routes'), {
+  prefix: '/api/v1/github',
+});
 
 app.get('/', async (req, reply) => {
   reply.redirect('/api-docs');
