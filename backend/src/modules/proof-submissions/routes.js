@@ -4,6 +4,7 @@ const {
 const auth = require('../../middleware/auth');
 const { z } = require('zod');
 const { toSchema } = require('../../utils/schemaHelper');
+const aiService = require('./ai.service');
 const rbac = require('../../middleware/rbac');
 const repo = require('../social-tasks/repository');
 const { checkHierarchyAccess } = require('../../utils/hierarchy');
@@ -234,8 +235,51 @@ async function routes(fastify) {
         params: toSchema(z.object({ taskId: z.string() })),
       },
     },
-    async (req) => {
-      return repo.getProofsByTask(req.params.taskId);
+    async (req, reply) => {
+      try {
+        const task = await repo.getTaskById(req.params.taskId);
+        if (!task) {
+          return reply.status(404).send({ error: 'Task not found' });
+        }
+        const proofs = await repo.getProofsByTask(req.params.taskId);
+
+        const results = await Promise.all(
+          proofs.map(async (p) => {
+            const submissionData = {
+              ...p,
+              target_platform: task?.target_platform,
+              task_link: task?.task_link,
+              title: task?.title,
+              description: task?.description,
+            };
+
+            try {
+              const aiSummary = await aiService.generateTaskSummary(
+                submissionData,
+                req.user.id
+              );
+              return {
+                ...p,
+                aiSummary,
+              };
+            } catch (err) {
+              req.log.error(
+                err,
+                'Failed to generate AI summary for proof: ' + p.id
+              );
+              return {
+                ...p,
+                aiSummary: null,
+              };
+            }
+          })
+        );
+
+        return results;
+      } catch (err) {
+        req.log.error(err, 'Error in GET /proofs/task/:taskId');
+        return reply.status(500).send({ error: 'Internal server error' });
+      }
     }
   );
 
