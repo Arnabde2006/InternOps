@@ -271,28 +271,39 @@ describe('AI Provider Service', () => {
       process.env.AI_PROVIDER_ORDER = 'groq';
       process.env.AI_PROVIDER_FAILURE_LIMIT = '2';
       process.env.AI_PROVIDER_COOLDOWN_MS = '5000';
-      
+
       mockGetRedisClient.mockResolvedValue(null);
       mockFetch.mockRejectedValue(new Error('groq down'));
-      
+
       aiService = require('../../src/services/aiProviderService');
 
-      await expect(aiService.generateAIResponse({ userId: 'u1', messages: [] })).rejects.toThrow();
-      await expect(aiService.generateAIResponse({ userId: 'u1', messages: [] })).rejects.toThrow();
-      
+      await expect(
+        aiService.generateAIResponse({ userId: 'u1', messages: [] })
+      ).rejects.toThrow();
+      await expect(
+        aiService.generateAIResponse({ userId: 'u1', messages: [] })
+      ).rejects.toThrow();
+
       mockFetch.mockClear();
-      
-      await expect(aiService.generateAIResponse({ userId: 'u1', messages: [] })).rejects.toThrow();
+
+      await expect(
+        aiService.generateAIResponse({ userId: 'u1', messages: [] })
+      ).rejects.toThrow();
       expect(mockFetch).not.toHaveBeenCalled();
 
       jest.advanceTimersByTime(5001);
 
       mockFetch.mockResolvedValueOnce(
-        createJsonResponse({ choices: [{ message: { content: 'Recovered!' } }] })
+        createJsonResponse({
+          choices: [{ message: { content: 'Recovered!' } }],
+        })
       );
-      
-      const result = await aiService.generateAIResponse({ userId: 'u1', messages: [{ role: 'user', content: 'hello' }] });
-      
+
+      const result = await aiService.generateAIResponse({
+        userId: 'u1',
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+
       expect(result.content).toBe('Recovered!');
       expect(mockFetch).toHaveBeenCalledTimes(1);
     } finally {
@@ -304,27 +315,37 @@ describe('AI Provider Service', () => {
     jest.resetModules();
     process.env.AI_PROVIDER_ORDER = 'groq,openai';
     process.env.AI_PROVIDER_FAILURE_LIMIT = '1';
-    
+
     mockGetRedisClient.mockResolvedValue(null);
-    
+
     mockFetch
       .mockRejectedValueOnce(new Error('groq down'))
       .mockResolvedValueOnce(
-        createJsonResponse({ choices: [{ message: { content: 'OpenAI Fallback' } }] })
+        createJsonResponse({
+          choices: [{ message: { content: 'OpenAI Fallback' } }],
+        })
       );
-      
+
     aiService = require('../../src/services/aiProviderService');
 
-    const firstRes = await aiService.generateAIResponse({ userId: 'u2', messages: [] });
+    const firstRes = await aiService.generateAIResponse({
+      userId: 'u2',
+      messages: [],
+    });
     expect(firstRes.provider).toBe('openai');
-    
+
     mockFetch.mockClear();
     mockFetch.mockResolvedValueOnce(
-      createJsonResponse({ choices: [{ message: { content: 'OpenAI Second Try' } }] })
+      createJsonResponse({
+        choices: [{ message: { content: 'OpenAI Second Try' } }],
+      })
     );
-    
-    const secondRes = await aiService.generateAIResponse({ userId: 'u2', messages: [{ role: 'user', content: 'Different message' }] });
-    
+
+    const secondRes = await aiService.generateAIResponse({
+      userId: 'u2',
+      messages: [{ role: 'user', content: 'Different message' }],
+    });
+
     expect(secondRes.provider).toBe('openai');
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(mockFetch.mock.calls[0][0]).toContain('api.openai.com');
@@ -333,24 +354,24 @@ describe('AI Provider Service', () => {
   it('should enforce LRU cache eviction limits and TTL configurations', async () => {
     jest.clearAllMocks();
     jest.resetModules();
-    
+
     process.env.AI_USER_CACHE_MAX = '100';
     process.env.AI_CACHE_MAX_ENTRIES = '50';
     process.env.AI_CACHE_TTL_MS = '300000';
-    
+
     const { LRUCache } = require('lru-cache');
     aiService = require('../../src/services/aiProviderService');
-    
+
     expect(LRUCache).toHaveBeenCalledWith(
       expect.objectContaining({ max: 100 })
     );
-    
+
     aiService._caches.get = jest.fn().mockReturnValue(undefined);
-    
+
     await expect(
       aiService.generateAIResponse({ userId: 'cache-test-user', messages: [] })
     ).rejects.toThrow();
-    
+
     expect(LRUCache).toHaveBeenCalledWith(
       expect.objectContaining({
         max: 50,
@@ -364,15 +385,20 @@ describe('AI Provider Service', () => {
     jest.resetModules();
     process.env.AI_PROVIDER_ORDER = 'groq';
     mockGetRedisClient.mockResolvedValue(null);
-    
-    mockFetch.mockImplementation(() =>
-      new Promise((resolve) =>
-        setTimeout(() => {
-          resolve(createJsonResponse({ choices: [{ message: { content: 'Concurrent Success' } }] }));
-        }, 10)
-      )
+
+    mockFetch.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => {
+            resolve(
+              createJsonResponse({
+                choices: [{ message: { content: 'Concurrent Success' } }],
+              })
+            );
+          }, 10)
+        )
     );
-    
+
     aiService = require('../../src/services/aiProviderService');
 
     const promises = Array.from({ length: 10 }).map((_, i) =>
@@ -388,7 +414,7 @@ describe('AI Provider Service', () => {
     results.forEach((res) => {
       expect(res.content).toBe('Concurrent Success');
     });
-    
+
     expect(mockFetch).toHaveBeenCalledTimes(10);
   });
 });

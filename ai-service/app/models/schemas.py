@@ -1,22 +1,18 @@
-"""Pydantic schemas for request and response validation."""
-
+from pydantic import BaseModel
 from typing import List, Optional
-from pydantic import BaseModel, Field
 
 
 class ChatMessage(BaseModel):
-    role: str = Field(..., description="Role of the message author ('user', 'assistant', 'system')")
-    content: str = Field(..., min_length=1, description="Message text content")
+    role: str  # "user", "assistant", or "system"
+    content: str
 
 
-class GenerateRequest(BaseModel):
-    prompt: Optional[str] = Field(None, description="Prompt text")
-    user_input: Optional[str] = Field(None, description="Alternative alias for prompt")
-    messages: Optional[List[ChatMessage]] = Field(None, description="List of chat history messages")
-    provider: Optional[str] = Field(None, description="Override AI provider (gemini, openai)")
+class ChatRequest(BaseModel):
+    messages: Optional[List[ChatMessage]] = None
+    prompt: Optional[str] = None
 
 
-class GenerateResponse(BaseModel):
+class ChatResponse(BaseModel):
     provider: str
     content: str
     cached: bool = False

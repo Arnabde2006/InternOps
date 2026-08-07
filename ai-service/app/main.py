@@ -1,38 +1,67 @@
-"""Main FastAPI application entry point."""
+from contextlib import asynccontextmanager
+import logging
 
-from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
-from app.api.generate import router as generate_router
-from app.providers.base import AIProviderError
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import settings
+from app.core.database import get_pool, close_pool
+from app.core.redis_client import connect_redis, disconnect_redis
+
+from app.api.ai_routes import router as ai_router
+from app.api.v1.endpoints.health import router as health_router
+from app.api.v1.endpoints.certificates import router as certificates_router
+
+
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await get_pool()
+
+    try:
+        await connect_redis()
+    except Exception as exc:
+        logger.warning(
+            "Redis is unavailable. Continuing without cache: %s",
+            exc,
+        )
+
+    try:
+        yield
+    finally:
+        await disconnect_redis()
+        await close_pool()
+
 
 app = FastAPI(
-    title="AI Service",
-    version="0.1.0",
-    description="Microservice providing multi-provider AI text generation, caching, and failover.",
+    title=settings.PROJECT_NAME,
+    lifespan=lifespan,
 )
 
-# Mount routes under root and under /api/v1 for compatibility
-app.include_router(generate_router)
-app.include_router(generate_router, prefix="/api/v1")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-User-ID"],
+)
 
 
-@app.get("/health", tags=["Health"])
+app.include_router(certificates_router, prefix="/certificates", tags=["Certificates"])
+app.include_router(ai_router)
+app.include_router(health_router)
+
+@app.get("/")
+async def root():
+    return {
+        "message": "InternOps AI Service is running!"
+    }
+
+
+@app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "ok"}
-
-
-@app.exception_handler(ValueError)
-async def value_error_handler(request: Request, exc: ValueError):
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={"detail": str(exc)},
-    )
-
-
-@app.exception_handler(AIProviderError)
-async def ai_provider_error_handler(request: Request, exc: AIProviderError):
-    return JSONResponse(
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        content={"detail": str(exc)},
-    )
+    return {
+        "status": "ok"
+    }

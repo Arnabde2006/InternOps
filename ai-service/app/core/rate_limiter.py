@@ -1,52 +1,80 @@
-"""In-memory sliding window rate limiter for endpoint requests."""
-
+import logging
 import time
-from collections import defaultdict
 from typing import Dict, List
-from fastapi import HTTPException, Request, status
-from app.core.config import settings
 
+import redis.asyncio as redis
+from fastapi import Depends, HTTPException, Request, status
 
-class InMemoryRateLimiter:
-    """Tracks request timestamps per client and enforces rate limits."""
+from app.core.auth import User, get_current_user
+from app.core.config import RATE_LIMIT_PER_MINUTE, REDIS_URL
 
-    def __init__(self, requests_per_minute: int = 10):
+logger = logging.getLogger(__name__)
+
+# Initialize a global Redis client.
+redis_client = redis.from_url(REDIS_URL) if REDIS_URL else None
+
+class RateLimiter:
+    """Rate limiter with Redis fixed-window and in-memory sliding-window fallback."""
+
+    def __init__(self, requests_per_minute: int = RATE_LIMIT_PER_MINUTE):
         self.requests_per_minute = requests_per_minute
-        self.client_requests: Dict[str, List[float]] = defaultdict(list)
+        # Local fallback if Redis is unavailable
+        self.history: Dict[str, List[float]] = {}
 
-    def is_allowed(self, client_id: str) -> bool:
-        now = time.time()
-        window_start = now - 60.0
+    async def check_rate_limit(
+        self,
+        request: Request,
+        current_user: User = Depends(get_current_user),
+    ):
+        client_id = current_user.id if isinstance(current_user, User) else (
+            request.client.host if (request and getattr(request, "client", None)) else "unknown"
+        )
+        
+        # 1. Try Redis first
+        if redis_client:
+            key = f"ai:ratelimit:{client_id}"
+            try:
+                count = await redis_client.incr(key)
+                
+                # If this is the first request in the window, set expiration
+                if count == 1:
+                    await redis_client.expire(key, 60)
 
-        # Filter out requests older than 1 minute
-        self.client_requests[client_id] = [
-            ts for ts in self.client_requests[client_id] if ts > window_start
+                if count > self.requests_per_minute:
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail="AI request rate limit exceeded. Please wait before retrying.",
+                        headers={"Retry-After": "60"},
+                    )
+                return  # Success, exit early without using in-memory history
+                
+            except HTTPException:
+                raise # Re-raise the 429 block
+            except Exception as e:
+                # Log the failure and proceed to the in-memory fallback below
+                logger.warning("Redis rate limiter failed: %s. Falling back to in-memory.", e)
+        
+        # 2. Fallback to in-memory limiter
+        current_time = time.time()
+        window_start = current_time - 60
+
+        # Filter out timestamps older than 60 seconds
+        timestamps = [
+            ts
+            for ts in self.history.get(client_id, [])
+            if ts > window_start
         ]
 
-        if len(self.client_requests[client_id]) >= self.requests_per_minute:
-            return False
+        # If the client has already reached the limit, reject the request
+        if len(timestamps) >= self.requests_per_minute:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="AI request rate limit exceeded. Please wait before retrying.",
+                headers={"Retry-After": "60"},
+            )
 
-        self.client_requests[client_id].append(now)
-        return True
+        # Record this request
+        timestamps.append(current_time)
+        self.history[client_id] = timestamps
 
-    def reset(self):
-        """Reset all tracked requests (useful for test isolation)."""
-        self.client_requests.clear()
-
-
-rate_limiter = InMemoryRateLimiter(requests_per_minute=settings.RATE_LIMIT_PER_MINUTE)
-
-
-async def check_rate_limit(request: Request):
-    """FastAPI dependency to enforce rate limits per client IP / auth token."""
-    client_id = request.client.host if request.client else "unknown"
-
-    auth_header = request.headers.get("authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        client_id = auth_header.split(" ")[1]
-
-    if not rate_limiter.is_allowed(client_id):
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Rate limit exceeded",
-        )
+ai_rate_limiter = RateLimiter()
