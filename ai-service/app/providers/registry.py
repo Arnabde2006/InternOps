@@ -90,24 +90,21 @@ def has_adapter(name: str) -> bool:
 
 
 def get_configured_providers_health() -> list:
-    """Lightweight config-presence health check.
+    """Return lightweight health information for configured providers."""
 
-    Reports whether each known provider has an API key configured. This
-    does NOT make a live API call to the vendor — a real ping would cost
-    quota/latency on every hit to /ai/health. Swap this out for an actual
-    `generate_text("ping")` call per provider if that tradeoff is wrong
-    for this service.
-    """
     report = []
+
     for name, key_var in _API_KEY_ENV_VAR.items():
         has_key = bool(os.environ.get(key_var))
+
         report.append(
             {
                 "name": name,
-                "available": has_key,
-                "lastError": None
+                "status": "healthy" if has_key else "unhealthy",
+                "lastErrorMessage": None
                 if has_key
-                else {"message": f"{key_var} is not configured"},
+                else f"{key_var} is not configured",
             }
         )
+
     return report
