@@ -437,6 +437,7 @@ const start = async () => {
     });
     initializeWebSocket(app.server, app.log);
     await bulkJobQueue.init();
+    await getRedisClient();
     app.log.info(
       { port: config.port },
       `Server listening on port ${config.port}`
