@@ -56,7 +56,12 @@ app.get(
 
 app.get(
   '/health',
-  ...async (req, reply) => {
+  {
+    config: {
+      rateLimit: false,
+    },
+  },
+  async (req, reply) => {
     return reply.send({ status: 'ok' });
   }
 );
