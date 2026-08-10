@@ -56,21 +56,7 @@ app.get(
 
 app.get(
   '/health',
-  {
-    config: {
-      rateLimit: false,
-    },
-  },
-  async (req, reply) => {
-    const redisStatus = getRedisStatus();
-    if (process.env.NODE_ENV === 'test') {
-      return reply.send({ status: 'ok' });
-    }
-    if (redisStatus === 'disconnected') {
-      return reply
-        .status(503)
-        .send({ status: 'degraded', redis: 'disconnected' });
-    }
+  ...async (req, reply) => {
     return reply.send({ status: 'ok' });
   }
 );
