@@ -42,7 +42,11 @@ class BulkJobQueueService {
     try {
       this.connection = getRedisConnection();
 
-      if (this.connection && process.env.NODE_ENV !== 'test') {
+      if (
+        this.connection &&
+        process.env.NODE_ENV !== 'test' &&
+        process.env.BULLMQ_ENABLED !== 'false'
+      ) {
         this.queue = new Queue(QUEUE_NAME, {
           connection: this.connection,
           defaultJobOptions: {
