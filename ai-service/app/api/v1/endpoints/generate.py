@@ -27,6 +27,11 @@ async def generate_ai_content(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Prompt or user_input is required in payload",
         )
+    try:
+        from app.core.security import sanitize_prompt
+        prompt = sanitize_prompt(prompt)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     try:
         content, provider_name = await ai_orchestrator.generate_text_with_fallback(prompt)

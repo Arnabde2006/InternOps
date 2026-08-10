@@ -45,7 +45,6 @@ def test_chat_endpoint_rejects_injection_attempt():
     app.include_router(router)
     app.dependency_overrides[get_current_user] = lambda: User(id="test_user", roles=["ADMIN"])
     from app.core.rate_limit import chat_rate_limiter
-    chat_rate_limiter._hits.clear()
     client = TestClient(app, raise_server_exceptions=False)
 
     r = client.post(
