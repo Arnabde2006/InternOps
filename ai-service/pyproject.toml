@@ -22,3 +22,8 @@ dev = [
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+filterwarnings = [
+    "ignore:.*httpx.*starlette.testclient.*:DeprecationWarning",
+    "ignore:.*httpx.*starlette.testclient.*:Warning",
+    "ignore:Fallback provider.*lacks a valid API key.*:RuntimeWarning"
+]
