@@ -7,7 +7,7 @@ inside the adapters themselves, so the adapters stay focused purely on
 "how do I talk to this vendor."
 
 Env vars:
-  AI_PROVIDER       - "gemini" (default) or any supported provider name
+  AI_PROVIDER        - "gemini" (default) or any supported provider name
   <PROVIDER>_API_KEY - required for each provider (HUGGINGFACE uses _TOKEN)
   <PROVIDER>_MODEL   - optional override (defaults to adapter's default)
 """
@@ -90,8 +90,14 @@ def has_adapter(name: str) -> bool:
 
 
 def get_configured_providers_health() -> list:
-    """Return lightweight health information for configured providers."""
+    """Return lightweight health information for configured providers.
 
+    Reports whether each known provider has an API key configured. This
+    does NOT make a live API call to the vendor — a real ping would cost
+    quota/latency on every hit to /ai/health. Swap this out for an actual
+    `generate_chat("ping")` call per provider if that tradeoff is wrong
+    for this service.
+    """
     report = []
 
     for name, key_var in _API_KEY_ENV_VAR.items():
