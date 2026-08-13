@@ -138,8 +138,9 @@ async def test_generate_rate_limited_after_threshold(monkeypatch):
 @respx.mock
 async def test_generate_provider_error_maps_to_503():
     """POST /generate maps downstream provider errors to 503 Service Unavailable."""
-    respx.post(url__startswith=GEMINI_URL_PREFIX).mock(
-        return_value=httpx.Response(500, text="Internal Gemini Server Error")
+    # Mock ALL providers in the failover chain to simulate a complete outage
+    respx.post().mock(
+        return_value=httpx.Response(500, text="Internal Server Error")
     )
 
     async with AsyncClient(
