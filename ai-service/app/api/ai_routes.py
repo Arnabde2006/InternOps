@@ -20,6 +20,11 @@ from app.core.auth import User, get_current_user
 from app.core.rate_limit import enforce_rate_limit
 from app.core.rbac import require_roles
 from app.core.usage import (
+from ..core.auth import User, get_current_user
+from ..core.rate_limit import enforce_rate_limit
+from ..core.rbac import require_permission
+from ..core.cache import cache_key, get_or_set
+from ..core.usage import (
     DAILY_AI_LIMIT,
     get_daily_usage_report,
     get_today_usage,
@@ -82,9 +87,13 @@ async def chat(
     current_user: User = Depends(get_current_user),
     _rate_limited: None = Depends(enforce_rate_limit),
 ):
+    
     final_messages: List[dict] = []
 
     if body.messages:
+        # Role validity is enforced by the Role enum on ChatMessage —
+        # an invalid role fails FastAPI's own 422 validation before we
+        # get here (equivalent to the JS 400 "Invalid message role").
         final_messages = [
             {"role": msg.role.value, "content": (msg.content or "")[:2000]}
             for msg in body.messages[:16]
@@ -146,7 +155,9 @@ async def chat(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="AI provider service unavailable"
         )
-    except AIProviderError:
+    except AIProviderError as error:
+        # Covers ProviderTimeoutError, and any AIProviderError raised
+        # directly by the registry (e.g. missing API key config).
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="AI service unavailable",
