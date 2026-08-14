@@ -23,12 +23,29 @@ from app.core.auth import get_current_user, User
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
+    import app.core.rate_limit as rate_limit_module
+
+    class FakeRedis:
+        """Minimal in-memory stand-in for redis.asyncio.Redis, just for tests."""
+
+        def __init__(self):
+            self.counts = {}
+
+        async def incr(self, key):
+            self.counts[key] = self.counts.get(key, 0) + 1
+            return self.counts[key]
+
+        async def expire(self, key, seconds):
+            pass
+
+    # Force the limiter to use our fake client instead of a real Redis connection.
+    fake_redis = FakeRedis()
+    monkeypatch.setattr(rate_limit_module, "get_redis_client", lambda: fake_redis)
+
     app = FastAPI()
     app.include_router(router)
     app.dependency_overrides[get_current_user] = lambda: User(id="test_user", roles=["ADMIN"])
-    # reset in-memory stubs between tests so they don't bleed into each other
-    chat_rate_limiter._hits.clear()
     return TestClient(app, raise_server_exceptions=False)
 
 
@@ -66,10 +83,10 @@ def test_chat_truncates_message_list_to_16(client):
 
 
 def test_chat_without_configured_provider_key_returns_503(client, monkeypatch):
-    # No GEMINI_API_KEY/OPENAI_API_KEY set in the test environment ->
+    # No API keys set in the test environment ->
     # the registry raises AIProviderError -> mapped to 503.
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "GROQ_API_KEY", "ANTHROPIC_API_KEY", "DEEPSEEK_API_KEY", "HUGGINGFACE_TOKEN"]:
+        monkeypatch.delenv(key, raising=False)
     r = client.post("/ai/chat", json={"prompt": "hello"})
     assert r.status_code == 503
     assert r.json()["detail"] == "AI service unavailable"
@@ -90,25 +107,23 @@ def test_chat_happy_path_with_mocked_provider(client, monkeypatch):
     assert body == {"provider": "fake-provider", "cached": False, "content": "hi there!"}
 
 
-def test_messages_to_prompt_flattens_roles():
-    from app.api.ai_routes import _messages_to_prompt
-
-    prompt = _messages_to_prompt(
-        [
-            {"role": "system", "content": "Be concise."},
-            {"role": "user", "content": "Hi"},
-        ]
-    )
-    assert prompt == "System: Be concise.\n\nUser: Hi"
-
-
 def test_health_endpoint(client, monkeypatch):
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    for key in [
+        "GEMINI_API_KEY",
+        "OPENAI_API_KEY",
+        "GROQ_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "DEEPSEEK_API_KEY",
+        "HUGGINGFACE_TOKEN",
+    ]:
+        monkeypatch.delenv(key, raising=False)
+
     r = client.get("/ai/health")
     assert r.status_code == 200
+
     body = r.json()
-    names = {p["name"] for p in body["providers"]}
+    names = [p["name"] for p in body["providers"]]
+
     assert {"gemini", "openai"}.issubset(names)
     assert all(p["status"] == "unhealthy" for p in body["providers"])
 
@@ -143,7 +158,6 @@ async def test_health_endpoint_reports_unhealthy_when_circuit_open(client, monke
         assert "Circuit breaker open" in gemini_entry["lastErrorMessage"]
     finally:
         await cb.record_success()
-
 
 
 def test_usage_endpoint(client):

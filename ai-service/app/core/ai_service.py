@@ -1,7 +1,19 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from app.core.config import AI_PROVIDER_ORDER, GEMINI_API_KEY, is_placeholder
+import os
+from app.core.config import settings, GEMINI_API_KEY, PLACEHOLDER_KEYS
 from app.providers.gemini import call_gemini
+from app.providers.nvidia import call_nvidia
+
+# Build the provider order from settings (primary first, then active fallbacks)
+AI_PROVIDER_ORDER = [settings.PRIMARY_AI_PROVIDER] + list(settings.ACTIVE_FALLBACK_PROVIDERS)
+
+
+def is_placeholder(key: Optional[str]) -> bool:
+    """Return True if the key is missing or still a placeholder value."""
+    if not key:
+        return True
+    return key.strip() in PLACEHOLDER_KEYS
 
 # ── Simple in-memory cache ────────────────────────────────────────────────────
 _cache: dict = {}
@@ -60,10 +72,8 @@ def _record_success(name: str):
 
 # ── Provider registry ─────────────────────────────────────────────────────────
 PROVIDER_REGISTRY = {
-    "nvidia": {
-        "key": lambda: __import__("app.core.config").core.config.NVIDIA_API_KEY,
-        "call": __import__("app.providers.nvidia").providers.nvidia.call_nvidia,
-    },
+        "key": lambda: os.environ.get("NVIDIA_API_KEY", ""),
+        "call": call_nvidia,
     "gemini": {
         "key": lambda: GEMINI_API_KEY,
         "call": call_gemini,
