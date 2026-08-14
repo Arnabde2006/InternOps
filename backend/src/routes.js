@@ -52,6 +52,9 @@ module.exports = async function routes(fastify, opts) {
   fastify.register(require('./modules/social-tasks/routes'), {
     prefix: '/tasks',
   });
+  fastify.register(require('./modules/onboarding/routes'), {
+    prefix: '/onboarding',
+  });
   fastify.register(require('./modules/proof-submissions/routes'), {
     prefix: '/proofs',
   });
