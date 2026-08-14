@@ -282,6 +282,8 @@ export default function FloatingChatbot() {
   const user = useAuthStore((s) => s.user);
   const role = user?.role || 'INTERN';
 
+  const isAllowed = ['ADMIN', 'SENIOR_TL', 'TL'].includes(role);
+
   const now = () =>
     new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -392,6 +394,8 @@ What do you need help with?`;
       },
     ]);
   };
+
+  if (!isAllowed) return null;
 
   return (
     <>
