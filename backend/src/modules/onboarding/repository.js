@@ -103,13 +103,7 @@ async function createChecklist(
         (intern_id, title, role, department, created_by)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [
-        internId,
-        title,
-        role,
-        department || null,
-        createdBy,
-      ]
+      [internId, title, role, department || null, createdBy]
     );
 
     const checklist = checklistResult.rows[0];
@@ -231,12 +225,7 @@ async function updateChecklist(
          updated_at = NOW()
        WHERE id = $4
        RETURNING *`,
-      [
-        title || null,
-        role || null,
-        department || null,
-        checklistId,
-      ]
+      [title || null, role || null, department || null, checklistId]
     );
 
     if (checklistResult.rowCount === 0) {
