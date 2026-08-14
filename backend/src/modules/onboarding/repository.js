@@ -1,64 +1,43 @@
 const pool = require('../../config/db');
 
-async function getTemplate(role, department) {
-  const result = await pool.query(
-    `SELECT
-       ot.*,
-       COALESCE(
-         json_agg(
-           json_build_object(
-             'id', oti.id,
-             'title', oti.title,
-             'description', oti.description,
-             'due_day_offset', oti.due_day_offset,
-             'social_task_id', oti.social_task_id,
-             'position', oti.position
-           )
-           ORDER BY oti.position, oti.id
-         ) FILTER (WHERE oti.id IS NOT NULL),
-         '[]'::json
-       ) AS items
-     FROM onboarding_templates ot
-     LEFT JOIN onboarding_template_items oti
-       ON oti.template_id = ot.id
-     WHERE ot.role = $1
-       AND (ot.department = $2 OR ot.department IS NULL)
-     GROUP BY ot.id
-     ORDER BY
-       CASE WHEN ot.department = $2 THEN 0 ELSE 1 END,
-       ot.updated_at DESC
-     LIMIT 1`,
-    [role, department || null]
-  );
-
-  return result.rows[0] || null;
-}
-
-async function createTemplate(
-  { role, department, title, createdBy },
-  items = []
-) {
+/**
+ * Create a reusable onboarding template with its items.
+ */
+async function createTemplate({
+  title,
+  role,
+  departmentId,
+  createdBy,
+  items = [],
+}) {
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
     const templateResult = await client.query(
-      `INSERT INTO onboarding_templates
-        (role, department, title, created_by)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [role, department || null, title, createdBy]
+      `
+        INSERT INTO onboarding_templates (
+          title,
+          role,
+          department_id,
+          created_by
+        )
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `,
+      [title, role, departmentId || null, createdBy]
     );
 
     const template = templateResult.rows[0];
+    const savedItems = [];
 
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
 
-      await client.query(
-        `INSERT INTO onboarding_template_items
-          (
+      const itemResult = await client.query(
+        `
+          INSERT INTO onboarding_template_items (
             template_id,
             title,
             description,
@@ -66,21 +45,28 @@ async function createTemplate(
             social_task_id,
             position
           )
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING *
+        `,
         [
           template.id,
           item.title,
           item.description || null,
-          item.due_day_offset ?? null,
-          item.social_task_id || null,
-          item.position ?? i,
+          item.dueDayOffset ?? null,
+          item.socialTaskId || null,
+          i,
         ]
       );
+
+      savedItems.push(itemResult.rows[0]);
     }
 
     await client.query('COMMIT');
 
-    return getTemplate(role, department);
+    return {
+      ...template,
+      items: savedItems,
+    };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -89,37 +75,132 @@ async function createTemplate(
   }
 }
 
-async function createChecklist(
-  { internId, title, role, department, createdBy },
-  items = []
-) {
+/**
+ * Find a reusable template for a role/department.
+ */
+async function findTemplate(role, departmentId) {
+  const result = await pool.query(
+    `
+      SELECT *
+      FROM onboarding_templates
+      WHERE role = $1
+        AND (
+          department_id = $2
+          OR department_id IS NULL
+        )
+        AND deleted_at IS NULL
+      ORDER BY
+        CASE
+          WHEN department_id = $2 THEN 0
+          ELSE 1
+        END,
+        created_at DESC
+      LIMIT 1
+    `,
+    [role, departmentId || null]
+  );
+
+  if (!result.rows[0]) {
+    return null;
+  }
+
+  const template = result.rows[0];
+
+  const itemsResult = await pool.query(
+    `
+      SELECT *
+      FROM onboarding_template_items
+      WHERE template_id = $1
+      ORDER BY position ASC, created_at ASC
+    `,
+    [template.id]
+  );
+
+  return {
+    ...template,
+    items: itemsResult.rows,
+  };
+}
+
+/**
+ * Get a template by id.
+ */
+async function getTemplateById(templateId) {
+  const result = await pool.query(
+    `
+      SELECT *
+      FROM onboarding_templates
+      WHERE id = $1
+        AND deleted_at IS NULL
+      LIMIT 1
+    `,
+    [templateId]
+  );
+
+  if (!result.rows[0]) {
+    return null;
+  }
+
+  const template = result.rows[0];
+
+  const itemsResult = await pool.query(
+    `
+      SELECT *
+      FROM onboarding_template_items
+      WHERE template_id = $1
+      ORDER BY position ASC, created_at ASC
+    `,
+    [templateId]
+  );
+
+  return {
+    ...template,
+    items: itemsResult.rows,
+  };
+}
+
+/**
+ * Attach an editable checklist to an intern.
+ */
+async function createChecklist({
+  internId,
+  templateId = null,
+  title,
+  role,
+  departmentId,
+  assignedBy,
+  items = [],
+}) {
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
     const checklistResult = await client.query(
-      `INSERT INTO onboarding_checklists
-        (intern_id, title, role, department, created_by)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [
-        internId,
-        title,
-        role,
-        department || null,
-        createdBy,
-      ]
+      `
+        INSERT INTO onboarding_checklists (
+          intern_id,
+          template_id,
+          title,
+          role,
+          department_id,
+          assigned_by
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      `,
+      [internId, templateId, title, role, departmentId || null, assignedBy]
     );
 
     const checklist = checklistResult.rows[0];
+    const savedItems = [];
 
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
 
-      await client.query(
-        `INSERT INTO onboarding_checklist_items
-          (
+      const itemResult = await client.query(
+        `
+          INSERT INTO onboarding_checklist_items (
             checklist_id,
             title,
             description,
@@ -127,21 +208,28 @@ async function createChecklist(
             social_task_id,
             position
           )
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING *
+        `,
         [
           checklist.id,
           item.title,
           item.description || null,
-          item.due_day_offset ?? null,
-          item.social_task_id || null,
-          item.position ?? i,
+          item.dueDayOffset ?? item.due_day_offset ?? null,
+          item.socialTaskId || item.social_task_id || null,
+          i,
         ]
       );
+
+      savedItems.push(itemResult.rows[0]);
     }
 
     await client.query('COMMIT');
 
-    return getChecklistById(checklist.id);
+    return {
+      ...checklist,
+      items: savedItems,
+    };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -150,160 +238,122 @@ async function createChecklist(
   }
 }
 
+/**
+ * Get checklist by id.
+ *
+ * Includes intern information so the route can determine whether
+ * the requester is the intern or their direct manager.
+ */
 async function getChecklistById(checklistId) {
   const result = await pool.query(
-    `SELECT
-       oc.*,
-       COALESCE(
-         json_agg(
-           json_build_object(
-             'id', oci.id,
-             'title', oci.title,
-             'description', oci.description,
-             'due_day_offset', oci.due_day_offset,
-             'social_task_id', oci.social_task_id,
-             'position', oci.position,
-             'completed', oci.completed
-           )
-           ORDER BY oci.position, oci.id
-         ) FILTER (WHERE oci.id IS NOT NULL),
-         '[]'::json
-       ) AS items
-     FROM onboarding_checklists oc
-     LEFT JOIN onboarding_checklist_items oci
-       ON oci.checklist_id = oc.id
-     WHERE oc.id = $1
-     GROUP BY oc.id`,
+    `
+      SELECT
+        c.*,
+        u.manager_id
+      FROM onboarding_checklists c
+      JOIN users u
+        ON u.id = c.intern_id
+      WHERE c.id = $1
+        AND c.deleted_at IS NULL
+        AND u.deleted_at IS NULL
+      LIMIT 1
+    `,
     [checklistId]
   );
 
-  return result.rows[0] || null;
+  if (!result.rows[0]) {
+    return null;
+  }
+
+  const checklist = result.rows[0];
+
+  const itemsResult = await pool.query(
+    `
+      SELECT *
+      FROM onboarding_checklist_items
+      WHERE checklist_id = $1
+      ORDER BY position ASC, created_at ASC
+    `,
+    [checklistId]
+  );
+
+  return {
+    ...checklist,
+    items: itemsResult.rows,
+  };
 }
 
-async function getChecklistForIntern(internId) {
+/**
+ * Get active onboarding checklists belonging to an intern.
+ */
+async function getChecklistsForIntern(internId) {
   const result = await pool.query(
-    `SELECT
-       oc.*,
-       COALESCE(
-         json_agg(
-           json_build_object(
-             'id', oci.id,
-             'title', oci.title,
-             'description', oci.description,
-             'due_day_offset', oci.due_day_offset,
-             'social_task_id', oci.social_task_id,
-             'position', oci.position,
-             'completed', oci.completed
-           )
-           ORDER BY oci.position, oci.id
-         ) FILTER (WHERE oci.id IS NOT NULL),
-         '[]'::json
-       ) AS items
-     FROM onboarding_checklists oc
-     LEFT JOIN onboarding_checklist_items oci
-       ON oci.checklist_id = oc.id
-     WHERE oc.intern_id = $1
-     GROUP BY oc.id
-     ORDER BY oc.created_at DESC
-     LIMIT 1`,
+    `
+      SELECT *
+      FROM onboarding_checklists
+      WHERE intern_id = $1
+        AND deleted_at IS NULL
+      ORDER BY created_at DESC
+    `,
     [internId]
   );
 
-  return result.rows[0] || null;
-}
+  const checklists = [];
 
-async function updateChecklist(
-  checklistId,
-  { title, role, department },
-  items = []
-) {
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-
-    const checklistResult = await client.query(
-      `UPDATE onboarding_checklists
-       SET
-         title = COALESCE($1, title),
-         role = COALESCE($2, role),
-         department = COALESCE($3, department),
-         updated_at = NOW()
-       WHERE id = $4
-       RETURNING *`,
-      [
-        title || null,
-        role || null,
-        department || null,
-        checklistId,
-      ]
+  for (const checklist of result.rows) {
+    const itemsResult = await pool.query(
+      `
+        SELECT *
+        FROM onboarding_checklist_items
+        WHERE checklist_id = $1
+        ORDER BY position ASC, created_at ASC
+      `,
+      [checklist.id]
     );
 
-    if (checklistResult.rowCount === 0) {
-      await client.query('ROLLBACK');
-      return null;
-    }
-
-    await client.query(
-      `DELETE FROM onboarding_checklist_items
-       WHERE checklist_id = $1`,
-      [checklistId]
-    );
-
-    for (let i = 0; i < items.length; i += 1) {
-      const item = items[i];
-
-      await client.query(
-        `INSERT INTO onboarding_checklist_items
-          (
-            checklist_id,
-            title,
-            description,
-            due_day_offset,
-            social_task_id,
-            position
-          )
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [
-          checklistId,
-          item.title,
-          item.description || null,
-          item.due_day_offset ?? null,
-          item.social_task_id || null,
-          item.position ?? i,
-        ]
-      );
-    }
-
-    await client.query('COMMIT');
-
-    return getChecklistById(checklistId);
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
+    checklists.push({
+      ...checklist,
+      items: itemsResult.rows,
+    });
   }
+
+  return checklists;
 }
 
-async function updateChecklistItem(itemId, completed) {
+/**
+ * Update completion state of a checklist item.
+ */
+async function updateChecklistItemCompletion({
+  itemId,
+  checklistId,
+  completed,
+}) {
   const result = await pool.query(
-    `UPDATE onboarding_checklist_items
-     SET completed = $1
-     WHERE id = $2
-     RETURNING *`,
-    [completed, itemId]
+    `
+      UPDATE onboarding_checklist_items
+      SET
+        completed = $1,
+        completed_at = CASE
+          WHEN $1 = TRUE THEN NOW()
+          ELSE NULL
+        END,
+        updated_at = NOW()
+      WHERE id = $2
+        AND checklist_id = $3
+      RETURNING *
+    `,
+    [completed, itemId, checklistId]
   );
 
   return result.rows[0] || null;
 }
 
 module.exports = {
-  getTemplate,
   createTemplate,
+  findTemplate,
+  getTemplateById,
   createChecklist,
   getChecklistById,
-  getChecklistForIntern,
-  updateChecklist,
-  updateChecklistItem,
+  getChecklistsForIntern,
+  updateChecklistItemCompletion,
 };
