@@ -10,9 +10,19 @@ const { normalizeText, parseCount } = require('./utils');
 // platforms in tests (see #1640 AC). Before this adapter is pointed at real
 // traffic, swap in a couple of verified live snapshots as fixtures and
 // confirm the selectors still line up.
-const POST_TEXT_SELECTORS = ['[data-testid="post-text"]', 'article [lang]', 'article p'];
-const LIKE_SELECTORS = ['[data-testid="reactions-count"]', '[aria-label*="reaction" i]'];
-const REPOST_SELECTORS = ['[data-testid="reposts-count"]', '[aria-label*="repost" i]'];
+const POST_TEXT_SELECTORS = [
+  '[data-testid="post-text"]',
+  'article [lang]',
+  'article p',
+];
+const LIKE_SELECTORS = [
+  '[data-testid="reactions-count"]',
+  '[aria-label*="reaction" i]',
+];
+const REPOST_SELECTORS = [
+  '[data-testid="reposts-count"]',
+  '[aria-label*="repost" i]',
+];
 
 // Comments render as a separate list beneath the post itself.
 const COMMENTS_CONTAINER_SELECTOR = '[data-testid="comments-list"]';
@@ -38,12 +48,14 @@ function extractPostText($) {
 function extractComments($) {
   const comments = [];
 
-  $(`${COMMENTS_CONTAINER_SELECTOR} [data-testid="comment-text"]`).each((_, node) => {
-    const text = normalizeText($(node).text());
-    if (text) {
-      comments.push(text);
+  $(`${COMMENTS_CONTAINER_SELECTOR} [data-testid="comment-text"]`).each(
+    (_, node) => {
+      const text = normalizeText($(node).text());
+      if (text) {
+        comments.push(text);
+      }
     }
-  });
+  );
 
   return comments;
 }
@@ -97,7 +109,11 @@ function parse(rawHtml) {
       },
     };
   } catch {
-    return { text: null, comments: [], visibleSignals: { likes: null, shares: null } };
+    return {
+      text: null,
+      comments: [],
+      visibleSignals: { likes: null, shares: null },
+    };
   }
 }
 

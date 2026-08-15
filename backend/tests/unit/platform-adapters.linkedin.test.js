@@ -3,7 +3,10 @@ const path = require('path');
 const linkedinAdapter = require('../../src/modules/social-tasks/platform-adapters/linkedin');
 
 const fixture = (name) =>
-  fs.readFileSync(path.join(__dirname, '../fixtures/platform-adapters/linkedin', name), 'utf8');
+  fs.readFileSync(
+    path.join(__dirname, '../fixtures/platform-adapters/linkedin', name),
+    'utf8'
+  );
 
 describe('LinkedIn platform adapter', () => {
   test('extracts post text', () => {
@@ -17,7 +20,9 @@ describe('LinkedIn platform adapter', () => {
   test('extracts post text and visible counts', () => {
     const result = linkedinAdapter.parse(fixture('post-with-counts.html'));
 
-    expect(result.text).toBe('Building projects and learning new technologies!');
+    expect(result.text).toBe(
+      'Building projects and learning new technologies!'
+    );
     expect(result.visibleSignals.likes).toBe('85');
     expect(result.visibleSignals.shares).toBe('12');
     expect(result.comments).toEqual([]);
@@ -62,7 +67,9 @@ describe('LinkedIn platform adapter', () => {
   });
 
   test('never throws on malformed markup', () => {
-    expect(() => linkedinAdapter.parse('<div><span>unterminated')).not.toThrow();
+    expect(() =>
+      linkedinAdapter.parse('<div><span>unterminated')
+    ).not.toThrow();
     expect(() => linkedinAdapter.parse('<<<not html at all>>>')).not.toThrow();
   });
 });

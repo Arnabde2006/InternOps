@@ -11,7 +11,11 @@ const { normalizeText, parseCount } = require('./utils');
 // never hits real platforms in tests (see #1640 AC). Before this adapter is
 // pointed at real traffic, swap in a couple of verified live snapshots as
 // fixtures and confirm the selectors still line up.
-const POST_TEXT_SELECTORS = ['[data-testid="tweetText"]', 'article [lang]', 'article p'];
+const POST_TEXT_SELECTORS = [
+  '[data-testid="tweetText"]',
+  'article [lang]',
+  'article p',
+];
 const LIKE_SELECTORS = ['[data-testid="like"]', '[aria-label*="Like" i]'];
 const REPOST_SELECTORS = [
   '[data-testid="retweet"]',
@@ -104,7 +108,11 @@ function parse(rawHtml) {
       },
     };
   } catch {
-    return { text: null, comments: [], visibleSignals: { likes: null, shares: null } };
+    return {
+      text: null,
+      comments: [],
+      visibleSignals: { likes: null, shares: null },
+    };
   }
 }
 

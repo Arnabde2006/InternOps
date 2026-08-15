@@ -3,7 +3,10 @@ const path = require('path');
 const twitterAdapter = require('../../src/modules/social-tasks/platform-adapters/twitter');
 
 const fixture = (name) =>
-  fs.readFileSync(path.join(__dirname, '../fixtures/platform-adapters/twitter', name), 'utf8');
+  fs.readFileSync(
+    path.join(__dirname, '../fixtures/platform-adapters/twitter', name),
+    'utf8'
+  );
 
 describe('Twitter/X platform adapter', () => {
   test('extracts post text', () => {
@@ -17,7 +20,9 @@ describe('Twitter/X platform adapter', () => {
   test('extracts post text and visible counts', () => {
     const result = twitterAdapter.parse(fixture('post-with-counts.html'));
 
-    expect(result.text).toBe('Learning JavaScript and building great projects!');
+    expect(result.text).toBe(
+      'Learning JavaScript and building great projects!'
+    );
     expect(result.visibleSignals.likes).toBe('125');
     expect(result.visibleSignals.shares).toBe('24');
     expect(result.comments).toEqual([]);
