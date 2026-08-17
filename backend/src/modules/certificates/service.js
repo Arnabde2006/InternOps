@@ -439,11 +439,13 @@ async function suggestTemplate(data) {
   const prompt = `Given an achievement: "${data.achievement}" of type "${data.type}", which of these certificate templates would be most appropriate?
 Available templates: ${templateNames}
 
-Return just the template name that best matches.`;
+Return only valid JSON in this exact format:
+{"templateName":"<template name>"}`;
 
   try {
     const result = await aiProvider.generate(prompt);
-    const matched = templates.find((t) => result.includes(t.name));
+    const parsed = JSON.parse(result);
+    const matched = templates.find((t) => t.name === parsed.templateName);
     return matched || templates[0];
   } catch {
     return templates[0];
