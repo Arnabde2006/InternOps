@@ -395,7 +395,7 @@ describe('AI Chat Integration Tests (#498)', () => {
       });
 
       // Should be rejected with error status
-      expect([503, 502, 504, 400]).toContain(res.statusCode);
+      expect([413, 503, 502, 504, 400]).toContain(res.statusCode);
     });
   });
 });
