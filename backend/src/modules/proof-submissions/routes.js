@@ -8,6 +8,7 @@ const aiService = require('./ai.service');
 const rbac = require('../../middleware/rbac');
 const repo = require('./repository');
 const service = require('./service');
+const pLimit = require('p-limit');
 
 async function routes(fastify) {
   // Submit proof (intern only)
@@ -107,36 +108,43 @@ async function routes(fastify) {
         }
         const proofs = await repo.getProofsByTask(req.params.taskId);
 
-        const results = await Promise.all(
-          proofs.map(async (p) => {
-            const submissionData = {
-              ...p,
-              target_platform: task?.target_platform,
-              task_link: task?.task_link,
-              title: task?.title,
-              description: task?.description,
-            };
+        const limit = pLimit(3);
 
-            try {
-              const aiSummary = await aiService.generateTaskSummary(
-                submissionData,
-                req.user.id
-              );
-              return {
+        const results = await Promise.all(
+          proofs.map((p) =>
+            limit(async () => {
+              const submissionData = {
                 ...p,
-                aiSummary,
+                target_platform: task?.target_platform,
+                task_link: task?.task_link,
+                title: task?.title,
+                description: task?.description,
               };
-            } catch (err) {
-              req.log.error(
-                err,
-                'Failed to generate AI summary for proof: ' + p.id
-              );
-              return {
-                ...p,
-                aiSummary: null,
-              };
-            }
-          })
+
+              try {
+                const ai = await aiService.generateTaskSummary(
+                  submissionData,
+                  req.user.id
+                );
+
+                return {
+                  ...p,
+                  aiSummary: ai.summary,
+                  consistencyFlag: ai.consistencyFlag,
+                };
+              } catch (err) {
+                req.log.error(
+                  err,
+                  'Failed to generate AI summary for proof: ' + p.id
+                );
+                return {
+                  ...p,
+                  aiSummary: null,
+                  consistencyFlag: 'needs_review',
+                };
+              }
+            })
+          )
         );
 
         return results;
