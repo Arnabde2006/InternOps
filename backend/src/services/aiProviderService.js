@@ -13,6 +13,18 @@ const COOLDOWN_MS = Number(
 const CACHE_TTL_MS = Number(process.env.AI_CACHE_TTL_MS || 5 * 60 * 1000);
 const CACHE_MAX_ENTRIES = Number(process.env.AI_CACHE_MAX_ENTRIES || 500);
 
+const MAX_AI_RESPONSE_BYTES = Number(
+  process.env.AI_MAX_RESPONSE_BYTES || 5 * 1024 * 1024
+);
+
+class ResponseSizeLimitError extends Error {
+  constructor(message = 'AI provider response exceeded size cap') {
+    super(message);
+    this.name = 'ResponseSizeLimitError';
+    this.statusCode = 413;
+  }
+}
+
 const USER_CACHE_MAX = Number(process.env.AI_USER_CACHE_MAX || 1000);
 const caches = new LRUCache({ max: USER_CACHE_MAX }); // userId -> LRUCache, evicts oldest when full
 function getCache(userId) {
@@ -29,17 +41,6 @@ function getCache(userId) {
   return cache;
 }
 
-const MAX_AI_RESPONSE_BYTES = Number(
-  process.env.AI_MAX_RESPONSE_BYTES || 5 * 1024 * 1024
-);
-
-class ResponseSizeLimitError extends Error {
-  constructor(message = 'AI provider response exceeded size cap') {
-    super(message);
-    this.name = 'ResponseSizeLimitError';
-    this.statusCode = 413;
-  }
-}
 
 function isPlaceholder(value) {
   return !value || String(value).startsWith('your-');
