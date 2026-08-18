@@ -348,7 +348,12 @@ What do you need help with?`;
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (
+      messagesEndRef.current &&
+      typeof messagesEndRef.current.scrollIntoView === 'function'
+    ) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, isTyping]);
 
   // Focus input when opened
