@@ -390,7 +390,7 @@ async function callHuggingFace(messages) {
 
 async function callFastAPI(messages) {
   const baseUrl = config.ai.fastapiUrl || 'http://localhost:8000';
-  const response = await fetchWithTimeout(`${baseUrl}/api/chat`, {
+  const response = await fetchWithTimeout(`${baseUrl}/ai/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
