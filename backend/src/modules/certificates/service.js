@@ -301,7 +301,9 @@ async function suggestTemplate(data) {
   const sanitized = sanitizeCertificatePromptData(data);
 
   const templates = await repo.getTemplates({ limit: 10 });
-  const templateNames = templates.map((t) => safeSandbox(t.name, 80)).join(', ');
+  const templateNames = templates
+    .map((t) => safeSandbox(t.name, 80))
+    .join(', ');
 
   const prompt = `Given an achievement: "${sanitized.achievement}" of type "${sanitized.type}", which of these certificate templates would be most appropriate?
 Available templates: ${templateNames}
@@ -310,7 +312,9 @@ Return just the template name that best matches.`;
 
   try {
     const result = await aiProvider.generate(prompt);
-    const matched = templates.find((t) => result.includes(safeSandbox(t.name, 80)));
+    const matched = templates.find((t) =>
+      result.includes(safeSandbox(t.name, 80))
+    );
     return matched || templates[0];
   } catch {
     return templates[0];
