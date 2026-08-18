@@ -41,7 +41,6 @@ function getCache(userId) {
   return cache;
 }
 
-
 function isPlaceholder(value) {
   return !value || String(value).startsWith('your-');
 }
