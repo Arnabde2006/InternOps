@@ -10,6 +10,9 @@ from app.providers.base import (
 
 
 class DummyProvider(BaseAIProvider):
+    async def generate_chat(self, messages: list[dict], temperature: float = 0.7, **kwargs) -> str:
+        return "dummy response"
+
     async def generate_text(self, prompt: str, temperature: float = 0.7, **kwargs) -> str:
         return "dummy response"
 
