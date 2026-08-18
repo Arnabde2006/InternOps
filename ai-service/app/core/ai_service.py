@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 import os
-from app.core.config import settings, GEMINI_API_KEY, PLACEHOLDER_KEYS
+from app.core.config import settings, GEMINI_API_KEY, NVIDIA_API_KEY, PLACEHOLDER_KEYS
 from app.providers.gemini import call_gemini
 from app.providers.nvidia import call_nvidia
 
@@ -72,8 +72,10 @@ def _record_success(name: str):
 
 # ── Provider registry ─────────────────────────────────────────────────────────
 PROVIDER_REGISTRY = {
-        "key": lambda: os.environ.get("NVIDIA_API_KEY", ""),
+    "nvidia": {
+        "key": lambda: NVIDIA_API_KEY,
         "call": call_nvidia,
+    },
     "gemini": {
         "key": lambda: GEMINI_API_KEY,
         "call": call_gemini,

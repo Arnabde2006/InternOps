@@ -14,7 +14,6 @@ const {
   bulkSend,
   getUnreadCount,
 } = require('../notifications/repository');
-const pool = require('../../config/db');
 const { z } = require('zod');
 
 async function routes(fastify) {
@@ -218,6 +217,62 @@ async function routes(fastify) {
     }
   );
 
+  // Department-scoped attendance sheet
+  fastify.get(
+    '/department/:deptId/sheet',
+    {
+      schema: {
+        tags: ['Attendance'],
+        description: 'Get a department attendance sheet',
+      },
+      preHandler: [auth, rbac('CAPTAIN', 'TL', 'SENIOR_TL', 'ADMIN')],
+    },
+    async (req, reply) => {
+      try {
+        const paramsSchema = z.object({ deptId: z.string().uuid() });
+        const querySchema = z
+          .object({
+            from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+            to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          })
+          .refine((value) => value.from <= value.to, {
+            message: 'from must be on or before to',
+          })
+          .refine(
+            (value) => {
+              const from = new Date(`${value.from}T00:00:00Z`);
+              const to = new Date(`${value.to}T00:00:00Z`);
+              return (to - from) / 86400000 <= 62;
+            },
+            { message: 'Date range cannot exceed 62 days' }
+          );
+
+        const parsedParams = paramsSchema.safeParse(req.params);
+        const parsedQuery = querySchema.safeParse(req.query);
+        if (!parsedParams.success || !parsedQuery.success) {
+          return reply.status(400).send({
+            error: 'Invalid attendance sheet request',
+            details: [
+              ...(parsedParams.success ? [] : parsedParams.error.issues),
+              ...(parsedQuery.success ? [] : parsedQuery.error.issues),
+            ],
+          });
+        }
+
+        return await repo.getDepartmentAttendanceSheet({
+          departmentId: parsedParams.data.deptId,
+          requesterId: req.user.id,
+          isAdmin: req.user.role === 'ADMIN',
+          from: parsedQuery.data.from,
+          to: parsedQuery.data.to,
+        });
+      } catch (err) {
+        req.log.error(err, 'Error in GET /attendance/department/:deptId/sheet');
+        return reply.status(500).send({ error: 'Internal server error' });
+      }
+    }
+  );
+
   // Get attendance for a user (with ownership check)
   fastify.get(
     '/:userId',
@@ -283,18 +338,13 @@ async function routes(fastify) {
     async (req, reply) => {
       try {
         if (req.user.role === 'ADMIN') {
-          const department_id = req.query?.department_id;
-          if (department_id) {
-            const res = await pool.query(
-              'SELECT id, full_name, email, role, department_id FROM users WHERE deleted_at IS NULL AND department_id = $1',
-              [department_id]
-            );
-            return res.rows;
+          const departmentId = req.query?.department_id;
+
+          if (departmentId) {
+            return await repo.getUsersByDepartment(departmentId);
           }
-          const all = await pool.query(
-            'SELECT id, full_name, email, role, department_id FROM users WHERE deleted_at IS NULL'
-          );
-          return all.rows;
+
+          return await repo.getAllUsers();
         }
         return await repo.getAuthorizedSubordinates(req.user.id);
       } catch (err) {
