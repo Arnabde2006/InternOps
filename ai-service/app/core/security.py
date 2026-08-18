@@ -25,4 +25,6 @@ def sanitize_user_input(text: str, max_length: int = 2000) -> str:
     cleaned = cleaned.replace("```", "'''")
     return cleaned
 
-sanitize_prompt = sanitize_user_input
+
+def sanitize_prompt(text: str, max_length: int = 2000) -> str:
+    return sanitize_user_input(text, max_length)

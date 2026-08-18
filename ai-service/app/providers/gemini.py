@@ -141,6 +141,4 @@ async def call_gemini(messages: list[dict]) -> str:
     Send messages to Gemini API using the new GeminiProvider REST adapter.
     """
     from app.core.config import GEMINI_API_KEY, GEMINI_MODEL
-    prompt = _build_prompt(messages)
-    provider = GeminiProvider(api_key=GEMINI_API_KEY, model_name=GEMINI_MODEL)
-    return await provider.generate_chat(prompt)
+    return await provider.generate_chat(messages)
