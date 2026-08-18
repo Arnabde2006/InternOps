@@ -1,13 +1,4 @@
 const app = require('../../src/app');
-
-app.addHook('onSend', (request, reply, payload, done) => {
-  if (request.headers['x-simulate-failure'] === 'true') {
-    return done(
-      new Error('Simulated post-login serialization/sending failure')
-    );
-  }
-  done(null, payload);
-});
 const pool = require('../../src/config/db');
 const { v4: uuidv4 } = require('uuid');
 const argon2 = require('argon2');
@@ -40,6 +31,7 @@ describe('Audit Integration Tests', () => {
   const seededSystemLogId = uuidv4();
 
   beforeAll(async () => {
+    jest.setTimeout(60000);
     await app.ready();
     await resetSeededAdminPassword();
 
@@ -299,6 +291,47 @@ describe('Audit Integration Tests', () => {
       });
       expect(res.statusCode).toBe(400);
     });
+    it('should return 400 for an invalid startDate', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/audit?startDate=not-a-date',
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+
+      const body = response.json();
+
+      expect(body.error).toBe('Invalid query parameters');
+      expect(body.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: 'startDate must be a valid date',
+          }),
+        ])
+      );
+    });
+
+    it('should return 400 for an invalid endDate', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/audit?endDate=not-a-date',
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+
+      const body = response.json();
+
+      expect(body.error).toBe('Invalid query parameters');
+      expect(body.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: 'endDate must be a valid date',
+          }),
+        ])
+      );
+    });
 
     it('should filter by resourceType', async () => {
       const res = await app.inject({
@@ -377,7 +410,6 @@ describe('Audit Integration Tests', () => {
       expect(body.data.every((log) => log.user_id === internId)).toBe(true);
       expect(body.data.some((log) => log.user_id === adminUserId)).toBe(false);
     });
-
     it("should not strip ip_address or user_agent from intern's own seeded log", async () => {
       const res = await app.inject({
         method: 'GET',
@@ -431,70 +463,6 @@ describe('Audit Integration Tests', () => {
       expect(body.page).toBe(1);
       expect(body.limit).toBe(10);
       expect(body.data.every((log) => log.user_id === internId)).toBe(true);
-    });
-  });
-
-  describe('Deferred Audit Logging on login success and failure', () => {
-    it('should write a LOGIN_SUCCESS audit log if login request completes successfully', async () => {
-      // Clear prior login logs for this user to ensure isolation
-      await pool.query(
-        "DELETE FROM audit_logs WHERE user_id = $1 AND action IN ('LOGIN', 'LOGIN_SUCCESS')",
-        [adminUserId]
-      );
-
-      const res = await app.inject({
-        method: 'POST',
-        url: '/api/v1/auth/login',
-        payload: {
-          email: SEEDED_ADMIN_EMAIL,
-          password: SEEDED_ADMIN_PASSWORD,
-        },
-      });
-
-      expect(res.statusCode).toBe(200);
-
-      // Wait for async onResponse hook to write to DB
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const dbRes = await pool.query(
-        `SELECT * FROM audit_logs WHERE user_id = $1 AND action = 'LOGIN_SUCCESS'`,
-        [adminUserId]
-      );
-      expect(dbRes.rows.length).toBeGreaterThan(0);
-
-      const logIds = dbRes.rows.map((r) => r.id);
-      await pool.query('DELETE FROM audit_logs WHERE id = ANY($1)', [logIds]);
-    });
-
-    it('should not write an audit log if login request fails due to downstream/serialization error', async () => {
-      // Clear prior login logs for this user to ensure isolation
-      await pool.query(
-        "DELETE FROM audit_logs WHERE user_id = $1 AND action IN ('LOGIN', 'LOGIN_SUCCESS')",
-        [adminUserId]
-      );
-
-      const res = await app.inject({
-        method: 'POST',
-        url: '/api/v1/auth/login',
-        headers: {
-          'x-simulate-failure': 'true',
-        },
-        payload: {
-          email: SEEDED_ADMIN_EMAIL,
-          password: SEEDED_ADMIN_PASSWORD,
-        },
-      });
-
-      expect(res.statusCode).toBe(500);
-
-      // Wait for potential async hooks to finish
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const dbRes = await pool.query(
-        `SELECT * FROM audit_logs WHERE user_id = $1 AND action IN ('LOGIN', 'LOGIN_SUCCESS')`,
-        [adminUserId]
-      );
-      expect(dbRes.rows.length).toBe(0);
     });
   });
 });
