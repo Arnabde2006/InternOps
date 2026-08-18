@@ -1,6 +1,6 @@
+from collections import OrderedDict
 from datetime import datetime, timedelta
 from typing import Optional
-import os
 from app.core.config import settings, GEMINI_API_KEY, NVIDIA_API_KEY, PLACEHOLDER_KEYS
 from app.providers.gemini import call_gemini
 from app.providers.nvidia import call_nvidia
@@ -15,13 +15,18 @@ def is_placeholder(key: Optional[str]) -> bool:
         return True
     return key.strip() in PLACEHOLDER_KEYS
 
-# ── Simple in-memory cache ────────────────────────────────────────────────────
-_cache: dict = {}
+# ── Bounded TTL cache (max 512 entries, 5-minute TTL) ────────────────────────
+# Uses an OrderedDict so we can evict the oldest entry when at capacity.
+# Expired entries are purged on every write to prevent stale accumulation.
+import hashlib
+import json
+
+_cache: OrderedDict = OrderedDict()
 CACHE_TTL_SECONDS = 300  # 5 minutes
+CACHE_MAX_SIZE = 512
 
 
 def _make_cache_key(messages: list[dict]) -> str:
-    import hashlib, json
     return hashlib.sha256(json.dumps(messages, sort_keys=True).encode()).hexdigest()
 
 
@@ -30,14 +35,24 @@ def _get_cached(messages: list[dict]) -> Optional[dict]:
     entry = _cache.get(key)
     if entry and datetime.utcnow() < entry["expires_at"]:
         return entry["value"]
+    # Remove stale entry if present
+    _cache.pop(key, None)
     return None
 
 
 def _set_cached(messages: list[dict], value: dict):
     key = _make_cache_key(messages)
+    now = datetime.utcnow()
+    # Evict all expired entries first
+    expired = [k for k, v in _cache.items() if now >= v["expires_at"]]
+    for k in expired:
+        _cache.pop(k, None)
+    # If still at capacity, drop the oldest entry (FIFO)
+    while len(_cache) >= CACHE_MAX_SIZE:
+        _cache.popitem(last=False)
     _cache[key] = {
         "value": value,
-        "expires_at": datetime.utcnow() + timedelta(seconds=CACHE_TTL_SECONDS),
+        "expires_at": now + timedelta(seconds=CACHE_TTL_SECONDS),
     }
 
 

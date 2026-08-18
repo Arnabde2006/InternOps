@@ -95,13 +95,14 @@ async def chat(
     current_user: User = Depends(get_current_user),
     _rate_limited: None = Depends(enforce_rate_limit),
 ):
+    # Sanitize prompt or messages
     try:
         if body.prompt:
-            sanitize_prompt(body.prompt)
+            body.prompt = sanitize_prompt(body.prompt)
         if body.messages:
             for msg in body.messages:
                 if msg.content:
-                    sanitize_prompt(msg.content)
+                    msg.content = sanitize_prompt(msg.content)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -212,14 +213,25 @@ async def generate_text(request: GenerationRequest):
     dependencies=[Depends(require_roles("ADMIN"))],
 )
 async def health():
-    providers = [
-        ProviderHealthEntry(
-            name=p["name"],
-            status=p["status"],
-            lastErrorMessage=p["lastErrorMessage"],
+    from app.providers.orchestrator import get_circuit_breaker
+
+    raw_providers = get_provider_health()
+    providers = []
+    for p in raw_providers:
+        name = p["name"]
+        cb = get_circuit_breaker(name)
+        is_open = await cb.is_open()
+
+        status_str = "unhealthy" if is_open else p["status"]
+        last_err = "Circuit breaker open" if is_open else p["lastErrorMessage"]
+
+        providers.append(
+            ProviderHealthEntry(
+                name=name,
+                status=status_str,
+                lastErrorMessage=last_err,
+            )
         )
-        for p in get_provider_health()
-    ]
     return HealthResponse(providers=providers)
 
 

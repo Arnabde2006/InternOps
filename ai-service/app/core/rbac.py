@@ -21,13 +21,10 @@ def require_permission(permission: str):
 
 
 def require_roles(*allowed_roles: str):
-    async def _check(
-        user: User = Depends(get_current_user),
-    ) -> User:
-        if not user.roles or not any(role in allowed_roles for role in user.roles):
+    async def _check(user: User = Depends(get_current_user)) -> User:
+        if not set(user.roles) & set(allowed_roles):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Forbidden",
+                status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
             )
         return user
 
