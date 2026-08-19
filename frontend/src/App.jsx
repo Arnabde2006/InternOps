@@ -33,6 +33,7 @@ const Notices = lazy(() => import('./pages/admin/Notices'));
 const Certificates = lazy(() => import('./pages/admin/Certificates'));
 const BulkGenerate = lazy(() => import('./pages/admin/BulkGenerate'));
 const CanvaTemplates = lazy(() => import('./pages/admin/CanvaTemplates'));
+const CanvaCallback = lazy(() => import('./pages/admin/CanvaCallback'));
 const AICertificates = lazy(() => import('./pages/admin/AICertificates'));
 const QuickGenerate = lazy(() => import('./pages/admin/QuickGenerate'));
 const FeatureFlags = lazy(() => import('./pages/admin/FeatureFlags'));
@@ -376,7 +377,10 @@ export default function App() {
                   <CanvaTemplates />
                 </RoleGuard>
               }
-            />
+            /><Route
+  path="canva-templates/callback"
+  element={<CanvaCallback />}
+/>
             <Route
               path="ai-certificates"
               element={
