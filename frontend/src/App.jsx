@@ -377,10 +377,11 @@ export default function App() {
                   <CanvaTemplates />
                 </RoleGuard>
               }
-            /><Route
-  path="canva-templates/callback"
-  element={<CanvaCallback />}
-/>
+            />
+            <Route
+              path="canva-templates/callback"
+              element={<CanvaCallback />}
+            />
             <Route
               path="ai-certificates"
               element={

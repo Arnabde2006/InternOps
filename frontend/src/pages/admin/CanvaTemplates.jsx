@@ -31,19 +31,19 @@ function CanvaTemplates() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showCreateModal, setShowCreateModal] = useState(false);
   useEffect(() => {
-  const success = searchParams.get('success');
-  const error = searchParams.get('error');
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
 
-  if (success === 'true') {
-    alert('Canva connected successfully!');
-    setSearchParams({});
-  }
+    if (success === 'true') {
+      alert('Canva connected successfully!');
+      setSearchParams({});
+    }
 
-  if (error) {
-    alert(`Canva connection failed: ${error}`);
-    setSearchParams({});
-  }
-}, [searchParams, setSearchParams]);
+    if (error) {
+      alert(`Canva connection failed: ${error}`);
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
   const [newTemplate, setNewTemplate] = useState({
     name: '',
     description: '',
