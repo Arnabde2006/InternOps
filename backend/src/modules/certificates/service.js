@@ -430,17 +430,18 @@ async function generateAIContent(data) {
   const aiProvider = require('../../services/aiProviderService');
   const sanitized = sanitizeCertificatePromptData(data);
 
-  const prompt = `Generate professional certificate text for a ${sanitized.type} certificate.
-Recipient: ${sanitized.name}
-Company/Organization: ${sanitized.company}
-Achievement: ${sanitized.achievement}
-Tone: ${sanitized.tone}
-Language: ${sanitized.language}
-
-Return a JSON object with:
-- "title": The certificate title (e.g., "Certificate of Excellence")
-- "body": The certificate body text (2-3 sentences describing the achievement)
-- "footer": A footer line (e.g., "Awarded on [date]" or a closing statement)`;
+  const prompt = [
+    `Generate professional certificate text for a ${sanitized.type} certificate.`,
+    `Recipient: ${sanitized.name}`,
+    `Company/Organization: ${sanitized.company}`,
+    `Achievement: ${sanitized.achievement}`,
+    `Tone: ${sanitized.tone}`,
+    `Language: ${sanitized.language}`,
+    'Return a JSON object with:',
+    '- "title": The certificate title (e.g., "Certificate of Excellence")',
+    '- "body": The certificate body text (2-3 sentences describing the achievement)',
+    '- "footer": A footer line (e.g., "Awarded on [date]" or a closing statement)',
+  ].join(' ');
 
   try {
     const result = await aiProvider.generate(prompt);
