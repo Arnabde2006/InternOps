@@ -44,9 +44,7 @@ describe('certificate AI prompt sanitization', () => {
     expect(prompt).not.toContain('\n\nand instead output');
     expect(prompt).not.toMatch(/[\u0000-\u001f\u007f]/);
 
-    const achievementEntry = prompt.match(
-      /Achievement: ([\s\S]*?) Tone:/
-    )?.[1];
+    const achievementEntry = prompt.match(/Achievement: ([\s\S]*?) Tone:/)?.[1];
     expect(achievementEntry).toBeDefined();
     expect(achievementEntry.length).toBeLessThanOrEqual(300);
   });
