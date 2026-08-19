@@ -122,7 +122,9 @@ function ManagerHome({ user }) {
 
         <StatCard
           label="Avg attendance"
-          value={isFetchingFirstTime ? '...' : (avgAtt === null ? '—' : `${avgAtt}%`)}
+          value={
+            isFetchingFirstTime ? '...' : avgAtt === null ? '—' : `${avgAtt}%`
+          }
           icon="📅"
           gradient="from-sky-400 to-blue-500"
         />
@@ -339,7 +341,7 @@ function InternHome({ user }) {
 
         <StatCard
           label="My avg rating"
-          value={isFetchingFirstTime ? '...' : (ratings !== null ? avg : '—')}
+          value={isFetchingFirstTime ? '...' : ratings !== null ? avg : '—'}
           sub="out of 10"
           icon="⭐"
           gradient="from-amber-400 to-orange-500"
@@ -347,7 +349,13 @@ function InternHome({ user }) {
 
         <StatCard
           label="Total ratings"
-          value={isFetchingFirstTime ? '...' : (ratings !== null ? ratingsData.length : '—')}
+          value={
+            isFetchingFirstTime
+              ? '...'
+              : ratings !== null
+                ? ratingsData.length
+                : '—'
+          }
           icon="📊"
           gradient="from-indigo-500 to-blue-600"
         />
@@ -484,9 +492,7 @@ export default function Home() {
 
   const u = { ...user, ...me };
 
-  const isManager = ['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'].includes(
-    u?.role
-  );
+  const isManager = ['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'].includes(u?.role);
 
   return isManager ? <ManagerHome user={u} /> : <InternHome user={u} />;
 }
