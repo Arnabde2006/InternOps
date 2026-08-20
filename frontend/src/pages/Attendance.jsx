@@ -346,10 +346,6 @@ export default function Attendance({
                 roster={isProjectView ? roster : undefined}
                 departmentId={deptId}
               />
-              <BulkAttendanceForm
-                roster={isProjectView ? roster : undefined}
-                departmentId={deptId}
-              />
             </>
           )}
         </>
