@@ -10,7 +10,9 @@ async def generate_certificate_design(task: str):
     try:
         prompt = build_certificate_prompt(task)
 
-        response = await ai_orchestrator.generate_text(prompt)
+        response, _ = await ai_orchestrator.generate_chat_with_fallback(
+            [{"role": "user", "content": prompt}]
+        )
 
         return response
 
@@ -18,5 +20,5 @@ async def generate_certificate_design(task: str):
         logger.exception("Failed to generate certificate design")
         raise HTTPException(
             status_code=502,
-            detail="Failed to generate certificate design."
+            detail="Failed to generate certificate design.",
         )
