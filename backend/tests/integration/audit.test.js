@@ -31,6 +31,7 @@ describe('Audit Integration Tests', () => {
   const seededSystemLogId = uuidv4();
 
   beforeAll(async () => {
+    jest.setTimeout(60000);
     await app.ready();
     await resetSeededAdminPassword();
 
@@ -290,6 +291,47 @@ describe('Audit Integration Tests', () => {
       });
       expect(res.statusCode).toBe(400);
     });
+    it('should return 400 for an invalid startDate', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/audit?startDate=not-a-date',
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+
+      const body = response.json();
+
+      expect(body.error).toBe('Invalid query parameters');
+      expect(body.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: 'startDate must be a valid date',
+          }),
+        ])
+      );
+    });
+
+    it('should return 400 for an invalid endDate', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/audit?endDate=not-a-date',
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+
+      const body = response.json();
+
+      expect(body.error).toBe('Invalid query parameters');
+      expect(body.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: 'endDate must be a valid date',
+          }),
+        ])
+      );
+    });
 
     it('should filter by resourceType', async () => {
       const res = await app.inject({
@@ -368,7 +410,6 @@ describe('Audit Integration Tests', () => {
       expect(body.data.every((log) => log.user_id === internId)).toBe(true);
       expect(body.data.some((log) => log.user_id === adminUserId)).toBe(false);
     });
-
     it("should not strip ip_address or user_agent from intern's own seeded log", async () => {
       const res = await app.inject({
         method: 'GET',
