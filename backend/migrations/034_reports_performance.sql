@@ -20,6 +20,6 @@ WHERE deleted_at IS NULL;
 
 -- Task Completion:
 -- Only active tasks are required by the report.
-CREATE INDEX IF NOT EXISTS idx_social_tasks_reports_active
+CREATE INDEX IF NOT EXISTS idx_social_tasks_reports_active  
 ON social_tasks (id)
 WHERE deleted_at IS NULL;
