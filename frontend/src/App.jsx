@@ -86,23 +86,26 @@ export default function App() {
 
   useEffect(() => {
     if (!bootRefreshPromise) {
-      bootRefreshPromise = api.post('/auth/refresh', {});
-    }
-
-    bootRefreshPromise
-      .then((res) => {
+      bootRefreshPromise = api.post('/auth/refresh', {}).then(async (res) => {
         setAuth({
           accessToken: res.data.accessToken,
           user: res.data.user,
         });
-        // Fetch feature flags right after a successful auth refresh so they
-        // are available before any page component renders.
-        fetchFlags();
-      })
+
+        // Fetch feature flags only once as part of the shared boot process.
+        await fetchFlags();
+
+        return res;
+      });
+    }
+
+    bootRefreshPromise
       .catch((err) => {
         const status = err.response?.status;
+
         if (status === 400 || status === 401 || status === 403) {
           const currentToken = useAuthStore.getState().accessToken;
+
           if (!currentToken) {
             logout();
             resetFlags();
