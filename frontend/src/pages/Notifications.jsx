@@ -32,6 +32,7 @@ export default function Notifications() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['notifications', page],
@@ -154,9 +155,9 @@ export default function Notifications() {
 
   const handleDelete = useCallback(
     (id) => {
-      deleteMut.mutate(id);
+      setDeletingId(id);
     },
-    [deleteMut]
+    []
   );
 
   return (
@@ -353,6 +354,20 @@ export default function Notifications() {
           </Btn>
         </div>
       )}
+
+      <ConfirmationModal
+        open={!!deletingId}
+        title="Delete notification?"
+        message="This will permanently remove this notification."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={() => {
+          deleteMut.mutate(deletingId);
+          setDeletingId(null);
+        }}
+        onCancel={() => setDeletingId(null)}
+        danger={true}
+      />
 
       <ConfirmationModal
         open={showDeleteModal}
