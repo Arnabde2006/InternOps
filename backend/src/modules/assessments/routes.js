@@ -1,6 +1,6 @@
 const auth = require('../../middleware/auth');
 const rbac = require('../../middleware/rbac');
-const repo = require('./repository');
+const service = require('./service');
 const { z } = require('zod');
 const { toSchema } = require('../../utils/schemaHelper');
 
@@ -17,7 +17,7 @@ async function routes(fastify) {
     },
     async (req, reply) => {
       try {
-        const assessment = await repo.getLatestAssessment(req.user.id);
+        const assessment = await service.getLatestAssessment(req.user.id);
         if (!assessment) {
           return reply.status(404).send({ error: 'No assessment found' });
         }
@@ -54,7 +54,7 @@ async function routes(fastify) {
       }
 
       try {
-        const assessment = await repo.getLatestAssessment(userId);
+        const assessment = await service.getLatestAssessment(userId);
         if (!assessment) {
           return reply.status(404).send({ error: 'No assessment found' });
         }
