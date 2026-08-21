@@ -81,6 +81,9 @@ module.exports = async function routes(fastify, opts) {
   fastify.register(require('./modules/onboarding/routes'), {
     prefix: '/onboarding',
   });
+  fastify.register(require('./modules/assessments/routes'), {
+    prefix: '/assessments',
+  });
 
   fastify.register(require('./modules/uptoskills/routes'), {
     prefix: '/uptoskills',
