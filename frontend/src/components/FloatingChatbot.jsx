@@ -435,7 +435,9 @@ What do you need help with?`;
         const { message, retryable } = getAiChatErrorMessage(err);
         addBot(
           `⚠️ ${message}`,
-          retryable ? [{ label: 'Retry', onClick: () => handleSend(msg) }] : null
+          retryable
+            ? [{ label: 'Retry', onClick: () => handleSend(msg) }]
+            : null
         );
       }
     },

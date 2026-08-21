@@ -53,7 +53,9 @@ describe('getAiChatErrorMessage', () => {
   });
 
   it('returns a retryable outage message for 5xx (provider/backend failure)', () => {
-    const err = { response: { status: 503, data: { error: 'AI service unavailable' } } };
+    const err = {
+      response: { status: 503, data: { error: 'AI service unavailable' } },
+    };
     const result = getAiChatErrorMessage(err);
     expect(result.message).toMatch(/temporarily unavailable/i);
     expect(result.retryable).toBe(true);
@@ -63,7 +65,9 @@ describe('getAiChatErrorMessage', () => {
     const err = {
       response: {
         status: 503,
-        data: { error: 'gemini failed with status 401: invalid api key xyz123' },
+        data: {
+          error: 'gemini failed with status 401: invalid api key xyz123',
+        },
       },
     };
     const result = getAiChatErrorMessage(err);
@@ -73,7 +77,10 @@ describe('getAiChatErrorMessage', () => {
 
   it('surfaces a non-retryable server-provided message for other 4xx errors', () => {
     const err = {
-      response: { status: 400, data: { error: 'Message content cannot be empty' } },
+      response: {
+        status: 400,
+        data: { error: 'Message content cannot be empty' },
+      },
     };
     const result = getAiChatErrorMessage(err);
     expect(result.message).toBe('Message content cannot be empty');

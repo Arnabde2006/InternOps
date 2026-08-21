@@ -67,9 +67,7 @@ describe('FloatingChatbot AI error handling (#1795)', () => {
     setup();
     await openAndSend('how to enroll');
 
-    const errorBubbles = await screen.findAllByText(
-      /temporarily unavailable/i
-    );
+    const errorBubbles = await screen.findAllByText(/temporarily unavailable/i);
     expect(errorBubbles).toHaveLength(1);
     expect(screen.getByText('Retry')).toBeInTheDocument();
   });

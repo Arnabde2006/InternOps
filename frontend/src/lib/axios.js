@@ -88,8 +88,7 @@ function getAiChatErrorMessage(err) {
   if (!err?.response) {
     if (err?.code === 'ECONNABORTED') {
       return {
-        message:
-          'The AI assistant took too long to respond. Please try again.',
+        message: 'The AI assistant took too long to respond. Please try again.',
         retryable: true,
       };
     }
@@ -129,7 +128,8 @@ function getAiChatErrorMessage(err) {
 
   const serverMessage = getApiErrorMessage(err.response.data);
   return {
-    message: serverMessage || 'Could not process that request. Please try rephrasing.',
+    message:
+      serverMessage || 'Could not process that request. Please try rephrasing.',
     retryable: false,
   };
 }

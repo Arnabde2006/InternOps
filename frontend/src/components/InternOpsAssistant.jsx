@@ -660,7 +660,9 @@ ${perms.cannotDo.map((item) => `- ${item}`).join('\n')}`;
         const { message, retryable } = getAiChatErrorMessage(err);
         addBotMessage(
           `⚠️ ${message}`,
-          retryable ? [{ label: 'Retry', onClick: () => handleSend(msg) }] : null
+          retryable
+            ? [{ label: 'Retry', onClick: () => handleSend(msg) }]
+            : null
         );
       }
     },
