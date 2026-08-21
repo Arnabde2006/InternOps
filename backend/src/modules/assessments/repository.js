@@ -17,7 +17,7 @@ async function createAssessment({
   keyStrengths = [],
   improvementAreas = [],
   nextActions = [],
-  feedback = ''
+  feedback = '',
 }) {
   const res = await pool.query(
     `INSERT INTO assessments (
@@ -41,7 +41,7 @@ async function createAssessment({
       keyStrengths,
       improvementAreas,
       nextActions,
-      feedback
+      feedback,
     ]
   );
   return res.rows[0];

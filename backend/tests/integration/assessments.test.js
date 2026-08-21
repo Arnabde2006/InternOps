@@ -14,13 +14,17 @@ describe('Assessments Integration Tests', () => {
     await app.ready();
 
     // Find our seeded users from seed-intern.js
-    const internRes = await pool.query("SELECT id FROM users WHERE email = 'intern@internops.com'");
+    const internRes = await pool.query(
+      "SELECT id FROM users WHERE email = 'intern@internops.com'"
+    );
     if (internRes.rowCount === 0) {
       throw new Error('Please run node seeds/seed-intern.js first');
     }
     internId = internRes.rows[0].id;
 
-    const captainRes = await pool.query("SELECT id FROM users WHERE email = 'captain@internops.com'");
+    const captainRes = await pool.query(
+      "SELECT id FROM users WHERE email = 'captain@internops.com'"
+    );
     captainId = captainRes.rows[0].id;
 
     // Create a third user (another intern) to test access control
@@ -34,13 +38,18 @@ describe('Assessments Integration Tests', () => {
     // Generate tokens
     internToken = generateAccessToken({ id: internId, role: 'INTERN' });
     captainToken = generateAccessToken({ id: captainId, role: 'CAPTAIN' });
-    otherInternToken = generateAccessToken({ id: otherInternId, role: 'INTERN' });
+    otherInternToken = generateAccessToken({
+      id: otherInternId,
+      role: 'INTERN',
+    });
   });
 
   afterAll(async () => {
     // Cleanup other intern user
-    await pool.query("DELETE FROM assessments WHERE user_id = $1", [otherInternId]);
-    await pool.query("DELETE FROM users WHERE id = $1", [otherInternId]);
+    await pool.query('DELETE FROM assessments WHERE user_id = $1', [
+      otherInternId,
+    ]);
+    await pool.query('DELETE FROM users WHERE id = $1', [otherInternId]);
     await app.close();
   });
 
@@ -89,7 +98,7 @@ describe('Assessments Integration Tests', () => {
       expect(data.user_id).toBe(internId);
     });
 
-    it("should allow the intern to check their own assessment", async () => {
+    it('should allow the intern to check their own assessment', async () => {
       const res = await app.inject({
         method: 'GET',
         url: `/api/v1/assessments/user/${internId}`,
@@ -98,7 +107,7 @@ describe('Assessments Integration Tests', () => {
       expect(res.statusCode).toBe(200);
     });
 
-    it("should forbid another intern from checking the assessment", async () => {
+    it('should forbid another intern from checking the assessment', async () => {
       const res = await app.inject({
         method: 'GET',
         url: `/api/v1/assessments/user/${internId}`,

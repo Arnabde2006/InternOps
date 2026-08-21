@@ -35,22 +35,24 @@ async function routes(fastify) {
     {
       schema: {
         tags: ['Assessments'],
-        description: "Get assessment by user email or ID",
+        description: 'Get assessment by user email or ID',
         params: toSchema(z.object({ userId: z.string().uuid() })),
       },
       preHandler: [auth], // We check access programmatically to allow the user themselves OR managers
     },
     async (req, reply) => {
       const { userId } = req.params;
-      
+
       // Access control: User themselves can access, or managers/admins
       const isSelf = req.user.id === userId;
-      const isManager = ['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'].includes(req.user.role);
-      
+      const isManager = ['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'].includes(
+        req.user.role
+      );
+
       if (!isSelf && !isManager) {
         return reply.status(403).send({ error: 'Forbidden' });
       }
-      
+
       try {
         const assessment = await repo.getLatestAssessment(userId);
         if (!assessment) {
