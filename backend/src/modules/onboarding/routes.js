@@ -130,11 +130,7 @@ module.exports = async function onboardingRoutes(fastify) {
       }
 
       try {
-        const draft = await buildChecklistWithAI(
-          role,
-          department,
-          req.user.id
-        );
+        const draft = await buildChecklistWithAI(role, department, req.user.id);
 
         return {
           source: 'ai',
