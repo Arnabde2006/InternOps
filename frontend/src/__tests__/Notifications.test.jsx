@@ -136,17 +136,10 @@ describe('Notifications Page Optimistic UI Updates', () => {
     const deleteButtons = screen.getAllByTitle('Delete notification');
     expect(deleteButtons).toHaveLength(2);
 
-    // Click delete on first notification — this opens the confirmation modal
+    // Click delete on first notification
     fireEvent.click(deleteButtons[0]);
 
-    // Confirmation modal should appear
-    expect(await screen.findByText('Delete notification?')).toBeInTheDocument();
-
-    // Click the confirm button in the modal
-    const confirmBtn = screen.getByRole('button', { name: /^Delete$/i });
-    fireEvent.click(confirmBtn);
-
-    // First notification card should now be removed from the DOM (optimistic update)
+    // First notification card should be instantly removed from the DOM
     await waitFor(() => {
       expect(screen.queryByText('Delete target alert')).not.toBeInTheDocument();
     });
