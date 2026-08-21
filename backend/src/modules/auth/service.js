@@ -132,7 +132,9 @@ async function login(email, password, ip, userAgent) {
     await recordLoginAttempt(email, ip, false).catch(() => {});
 
     // Notify admins (fire-and-forget). Suspended users get a distinct message.
-    const issueType = user?.suspended ? 'Account Suspended' : 'Login Failed — User Not Found';
+    const issueType = user?.suspended
+      ? 'Account Suspended'
+      : 'Login Failed — User Not Found';
     notifyAdmin(
       `⚠️ User Issue: ${issueType}\nUser: ${email}\nTime: ${new Date().toLocaleString()}`
     ).catch(() => {});
