@@ -3,16 +3,9 @@ import { PageHeader, Card, Badge, Spinner } from '../../components/ui';
 import CustomSelect from '../../components/CustomSelect';
 import { useTemplates } from '../../hooks/useCertificates';
 import {
-  useBulkGenerate,
-  useTemplates,
-  useBulkJobStatus,
-} from '../../hooks/useCertificates';
-
-import {
   useBulkAIGenerate,
   useBulkAIJobStatus,
 } from '../../hooks/useAICertificates';
-
 import {
   Upload,
   Plus,
@@ -34,16 +27,6 @@ const BulkGenerate = () => {
 
   const { data: templatesData, isLoading: templatesLoading } = useTemplates();
   const templates = templatesData?.data || [];
-  const seedTemplatesMutation = useSeedTemplates({
-    onSuccess: () => {
-      setSeedMessage(
-        'Default templates seeded successfully. Please refresh the page or re-open this step.'
-      );
-    },
-    onError: () => {
-      setSeedMessage('Failed to seed templates. Please try again.');
-    },
-  });
 
   const bulkGenerateMutation = useBulkAIGenerate();
 
@@ -58,8 +41,6 @@ const BulkGenerate = () => {
   const { data: jobStatusData, isFetching: isPolling } =
     useBulkAIJobStatus(jobId);
 
-  const jobStatus = jobStatusData?.data || null;
-  const isGenerating = bulkGenerateMutation.isPending;
   const jobStatus = jobStatusData?.data || null;
   const isGenerating = bulkGenerateMutation.isPending;
 
@@ -169,16 +150,19 @@ const BulkGenerate = () => {
 
   const goToPreview = () => {
     const message = validateRecipients();
+
     if (message) {
       setValidationError(message);
       return;
     }
+
     setValidationError('');
     setStep(3);
   };
 
   const handleGenerate = async () => {
     const message = validateRecipients();
+
     if (message) {
       setValidationError(message);
       setStep(2);
@@ -187,6 +171,7 @@ const BulkGenerate = () => {
 
     try {
       setValidationError('');
+
       const result = await bulkGenerateMutation.mutateAsync({
         template_id: selectedTemplate,
         certificates: recipients.map((r) => ({
@@ -196,6 +181,7 @@ const BulkGenerate = () => {
           certificate_type: 'achievement',
         })),
       });
+
       setJobId(result.data?.job_id || result.job_id);
       setStep(4);
     } catch (error) {
@@ -234,6 +220,7 @@ const BulkGenerate = () => {
               >
                 {s}
               </div>
+
               {s < 3 && (
                 <div
                   className={`w-20 h-1 mx-2 ${
@@ -250,10 +237,12 @@ const BulkGenerate = () => {
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
               Step 1: Select Template
             </h2>
+
             <div className="space-y-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Choose a certificate template
               </label>
+
               {templatesLoading ? (
                 <div className="flex items-center gap-2 text-gray-500">
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -268,6 +257,7 @@ const BulkGenerate = () => {
                   className="w-full"
                 />
               )}
+
               <button
                 type="button"
                 onClick={() => selectedTemplate && setStep(2)}
@@ -289,6 +279,7 @@ const BulkGenerate = () => {
             <div className="mb-6 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
               <div className="flex items-center gap-4">
                 <Upload className="h-8 w-8 text-gray-400" />
+
                 <div>
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Upload CSV file
@@ -297,6 +288,7 @@ const BulkGenerate = () => {
                     Format: name, email, title, achievement
                   </p>
                 </div>
+
                 <label className="ml-auto cursor-pointer">
                   <input
                     type="file"
@@ -304,11 +296,13 @@ const BulkGenerate = () => {
                     onChange={handleCsvUpload}
                     className="hidden"
                   />
+
                   <span className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                     Choose File
                   </span>
                 </label>
               </div>
+
               {csvFileName && (
                 <p className="mt-2 text-sm text-green-600 dark:text-green-400">
                   Loaded: {csvFileName}
@@ -318,6 +312,7 @@ const BulkGenerate = () => {
 
             <div className="flex items-center gap-2 mb-4">
               <span className="text-gray-500">or</span>
+
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Enter recipients manually
               </span>
@@ -336,18 +331,23 @@ const BulkGenerate = () => {
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                       Name
                     </th>
+
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                       Email
                     </th>
+
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                       Title
                     </th>
+
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                       Achievement
                     </th>
+
                     <th className="px-4 py-3 w-12"></th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {recipients.map((recipient, index) => (
                     <tr
@@ -365,6 +365,7 @@ const BulkGenerate = () => {
                           placeholder="John Doe"
                         />
                       </td>
+
                       <td className="px-4 py-2">
                         <input
                           type="email"
@@ -376,6 +377,7 @@ const BulkGenerate = () => {
                           placeholder="john@example.com"
                         />
                       </td>
+
                       <td className="px-4 py-2">
                         <input
                           type="text"
@@ -387,6 +389,7 @@ const BulkGenerate = () => {
                           placeholder="Software Engineer"
                         />
                       </td>
+
                       <td className="px-4 py-2">
                         <input
                           type="text"
@@ -398,6 +401,7 @@ const BulkGenerate = () => {
                           placeholder="Completed Training"
                         />
                       </td>
+
                       <td className="px-4 py-2">
                         <button
                           type="button"
@@ -419,8 +423,10 @@ const BulkGenerate = () => {
                 onClick={addRow}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
-                <Plus className="h-4 w-4" /> Add Row
+                <Plus className="h-4 w-4" />
+                Add Row
               </button>
+
               <span className="text-sm text-gray-500">
                 {recipients.length} recipient
                 {recipients.length !== 1 ? 's' : ''} added
@@ -438,6 +444,7 @@ const BulkGenerate = () => {
               >
                 Back
               </button>
+
               <button
                 type="button"
                 onClick={goToPreview}
@@ -455,17 +462,21 @@ const BulkGenerate = () => {
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
               Step 3: Preview & Generate
             </h2>
+
             <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Template</p>
+
                   <p className="font-medium text-gray-900 dark:text-white">
                     {templates?.find((t) => t.id === selectedTemplate)?.name ||
                       'Unknown'}
                   </p>
                 </div>
+
                 <div>
                   <p className="text-sm text-gray-500">Recipients</p>
+
                   <p className="font-medium text-gray-900 dark:text-white">
                     {recipients.length} certificate
                     {recipients.length !== 1 ? 's' : ''}
@@ -478,6 +489,7 @@ const BulkGenerate = () => {
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Recipients Preview
               </p>
+
               <div className="max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800">
@@ -485,14 +497,17 @@ const BulkGenerate = () => {
                       <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-400">
                         #
                       </th>
+
                       <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-400">
                         Name
                       </th>
+
                       <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-400">
                         Email
                       </th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {recipients.slice(0, 10).map((recipient, index) => (
                       <tr
@@ -500,14 +515,17 @@ const BulkGenerate = () => {
                         className="border-t border-gray-200 dark:border-gray-700"
                       >
                         <td className="px-4 py-2 text-gray-500">{index + 1}</td>
+
                         <td className="px-4 py-2 text-gray-900 dark:text-white">
                           {recipient.name}
                         </td>
+
                         <td className="px-4 py-2 text-gray-500">
                           {recipient.email}
                         </td>
                       </tr>
                     ))}
+
                     {recipients.length > 10 && (
                       <tr>
                         <td
@@ -537,6 +555,7 @@ const BulkGenerate = () => {
               >
                 Back
               </button>
+
               <button
                 type="button"
                 onClick={handleGenerate}
@@ -545,11 +564,13 @@ const BulkGenerate = () => {
               >
                 {isGenerating ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Generating...
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating...
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="h-4 w-4" /> Generate All
+                    <CheckCircle className="h-4 w-4" />
+                    Generate All
                   </>
                 )}
               </button>
@@ -562,6 +583,7 @@ const BulkGenerate = () => {
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
               Generation Progress
             </h2>
+
             {jobStatus ? (
               <div className="space-y-6">
                 <div>
@@ -569,8 +591,10 @@ const BulkGenerate = () => {
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Overall Progress
                     </span>
+
                     <span className="text-sm text-gray-500">{progress}%</span>
                   </div>
+
                   <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-blue-600 transition-all duration-300"
@@ -583,32 +607,40 @@ const BulkGenerate = () => {
                   <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-5 w-5 text-green-600" />
+
                       <span className="text-sm text-green-700 dark:text-green-400">
                         Completed
                       </span>
                     </div>
+
                     <p className="mt-1 text-2xl font-bold text-green-700 dark:text-green-400">
                       {jobStatus.completed_count || 0}
                     </p>
                   </div>
+
                   <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
                     <div className="flex items-center gap-2">
                       <XCircle className="h-5 w-5 text-red-600" />
+
                       <span className="text-sm text-red-700 dark:text-red-400">
                         Failed
                       </span>
                     </div>
+
                     <p className="mt-1 text-2xl font-bold text-red-700 dark:text-red-400">
                       {jobStatus.failed_count || 0}
                     </p>
                   </div>
+
                   <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <div className="flex items-center gap-2">
                       <AlertCircle className="h-5 w-5 text-blue-600" />
+
                       <span className="text-sm text-blue-700 dark:text-blue-400">
                         Total
                       </span>
                     </div>
+
                     <p className="mt-1 text-2xl font-bold text-blue-700 dark:text-blue-400">
                       {jobStatus.total_count || 0}
                     </p>
@@ -617,6 +649,7 @@ const BulkGenerate = () => {
 
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-gray-500">Status:</span>
+
                   <Badge
                     color={
                       jobStatus.status === 'completed'
@@ -628,9 +661,11 @@ const BulkGenerate = () => {
                   >
                     {jobStatus.status}
                   </Badge>
+
                   {isPolling && (
                     <span className="text-sm text-gray-500 flex items-center gap-1">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Polling...
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Polling...
                     </span>
                   )}
                 </div>
@@ -640,6 +675,7 @@ const BulkGenerate = () => {
                     <h3 className="text-lg font-medium mb-3 text-gray-900 dark:text-white">
                       Generated Certificates
                     </h3>
+
                     <div className="max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                       <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800">
@@ -647,14 +683,17 @@ const BulkGenerate = () => {
                             <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-400">
                               Name
                             </th>
+
                             <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-400">
                               Status
                             </th>
+
                             <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-400">
                               Certificate ID
                             </th>
                           </tr>
                         </thead>
+
                         <tbody>
                           {jobStatus.items.map((item, index) => (
                             <tr
@@ -664,6 +703,7 @@ const BulkGenerate = () => {
                               <td className="px-4 py-2 text-gray-900 dark:text-white">
                                 {item.recipient_name}
                               </td>
+
                               <td className="px-4 py-2">
                                 <Badge
                                   color={
@@ -675,6 +715,7 @@ const BulkGenerate = () => {
                                   {item.status}
                                 </Badge>
                               </td>
+
                               <td className="px-4 py-2 text-gray-500 font-mono text-xs">
                                 {item.certificate_id || '-'}
                               </td>
@@ -701,6 +742,7 @@ const BulkGenerate = () => {
                   >
                     Generate More
                   </button>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -714,12 +756,18 @@ const BulkGenerate = () => {
                                 `${r.recipient_name},${r.recipient_email || ''},${r.certificate_id || ''},${r.status}`
                             ),
                         ].join('\n');
-                        const blob = new Blob([csv], { type: 'text/csv' });
+
+                        const blob = new Blob([csv], {
+                          type: 'text/csv',
+                        });
+
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
+
                         a.href = url;
                         a.download = 'certificates.csv';
                         a.click();
+
                         URL.revokeObjectURL(url);
                       }
                     }}
