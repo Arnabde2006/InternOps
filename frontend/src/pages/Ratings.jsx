@@ -19,7 +19,6 @@ function Stars({ value }) {
     return <span className="text-slate-400 dark:text-slate-500">—</span>;
   }
 
-  // Ratings are stored out of 10. Convert to 5-star visual safely.
   const safeRaw = Math.max(0, Math.min(10, raw));
   const normalized = safeRaw / 2;
   const full = Math.max(0, Math.min(5, Math.round(normalized)));
