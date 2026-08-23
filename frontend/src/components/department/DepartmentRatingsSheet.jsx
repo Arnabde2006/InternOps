@@ -38,7 +38,14 @@ function EligibilityBadge({ score }) {
   }
 
   const val = Number(score);
-  if (val >= 1 && val < 5) {
+  if (Number.isNaN(val)) {
+    return (
+      <span className="font-bold text-slate-400 dark:text-slate-500">—</span>
+    );
+  }
+
+  const rounded = Math.round(val);
+  if (rounded >= 1 && rounded <= 4) {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 shadow-sm">
         🔴 Not Eligible
@@ -126,13 +133,9 @@ function RatingsGrid({
             : member.latest_score != null
               ? Number(member.latest_score)
               : null;
-        if (score == null) return false;
+        if (score == null || Number.isNaN(score)) return false;
 
-        return (
-          Math.round(score) === targetRating ||
-          Math.floor(score) === targetRating ||
-          Number(score.toFixed(0)) === targetRating
-        );
+        return Math.round(score) === targetRating;
       });
     }
 
@@ -145,13 +148,14 @@ function RatingsGrid({
             : member.latest_score != null
               ? Number(member.latest_score)
               : null;
-        if (score == null) return false;
+        if (score == null || Number.isNaN(score)) return false;
 
+        const rounded = Math.round(score);
         if (eligibilityFilter === 'ELIGIBLE') {
-          return score >= 5;
+          return rounded >= 5 && rounded <= 10;
         }
         if (eligibilityFilter === 'NOT_ELIGIBLE') {
-          return score >= 1 && score < 5;
+          return rounded >= 1 && rounded <= 4;
         }
         return true;
       });

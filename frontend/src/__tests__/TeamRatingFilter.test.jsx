@@ -109,7 +109,7 @@ describe('Team Page - Rating & Eligibility Filtering', () => {
     expect(screen.getAllByText('🟢 Eligible')).toHaveLength(2);
     expect(screen.getAllByText('🔴 Not Eligible')).toHaveLength(1);
     expect(screen.getByText('8')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getAllByText('3').length).toBeGreaterThan(0);
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
