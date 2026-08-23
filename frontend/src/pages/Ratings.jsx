@@ -112,14 +112,19 @@ export default function Ratings({
     error: sheetError,
     refetch: refetchSheet,
   } = useQuery({
-    queryKey: ['departmentRatingsSheet', activeDeptId, sheetFrom, sheetTo],
+    queryKey: [
+      'departmentRatingsSheet',
+      activeDeptId || 'all',
+      sheetFrom,
+      sheetTo,
+    ],
     queryFn: () =>
       api
-        .get(`/ratings/department/${activeDeptId}/sheet`, {
+        .get(`/ratings/department/${activeDeptId || 'all'}/sheet`, {
           params: { from: sheetFrom, to: sheetTo },
         })
         .then((res) => res.data),
-    enabled: viewAll && !!activeDeptId && !isProjectView,
+    enabled: viewAll && !isProjectView,
   });
 
   const {
@@ -303,18 +308,33 @@ export default function Ratings({
               </div>
 
               {avg && (
-                <div className="bg-amber-50 dark:bg-amber-950/40 px-5 py-3 rounded-2xl border border-amber-100 dark:border-amber-900/60 flex items-center gap-3 self-start sm:self-center">
-                  <div className="text-4xl font-extrabold text-amber-600 dark:text-amber-300">
-                    {avg}
+                <div className="flex items-center gap-3 self-start sm:self-center flex-wrap">
+                  <div className="bg-amber-50 dark:bg-amber-950/40 px-5 py-3 rounded-2xl border border-amber-100 dark:border-amber-900/60 flex items-center gap-3">
+                    <div className="text-4xl font-extrabold text-amber-600 dark:text-amber-300">
+                      {avg}
+                    </div>
+                    <div className="text-left">
+                      <div className="text-[10px] font-extrabold text-amber-700/70 dark:text-amber-300/80 uppercase tracking-wider">
+                        Average Rating
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
+                        avg of {ratings.length}{' '}
+                        {ratings.length === 1 ? 'rating' : 'ratings'} · out of
+                        10
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <div className="text-[10px] font-extrabold text-amber-700/70 dark:text-amber-300/80 uppercase tracking-wider">
-                      Average Rating
-                    </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
-                      avg of {ratings.length}{' '}
-                      {ratings.length === 1 ? 'rating' : 'ratings'} · out of 10
-                    </div>
+
+                  <div>
+                    {Number(avg) >= 1 && Number(avg) < 5 ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-black bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 shadow-sm">
+                        🔴 Not Eligible
+                      </span>
+                    ) : Number(avg) >= 5 ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-black bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60 shadow-sm">
+                        🟢 Eligible
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               )}
@@ -353,7 +373,7 @@ export default function Ratings({
                       className="w-full"
                       searchable={true}
                     />
-                    {!isProjectView && activeDeptId && (
+                    {!isProjectView && (
                       <button
                         type="button"
                         onClick={() => setViewAll((current) => !current)}
@@ -491,18 +511,33 @@ export default function Ratings({
               </div>
 
               {avg && (
-                <div className="bg-amber-50 dark:bg-amber-950/40 px-5 py-3 rounded-2xl border border-amber-100 dark:border-amber-900/60 flex items-center gap-3 self-start sm:self-center">
-                  <div className="text-4xl font-extrabold text-amber-600 dark:text-amber-300">
-                    {avg}
+                <div className="flex items-center gap-3 self-start sm:self-center flex-wrap">
+                  <div className="bg-amber-50 dark:bg-amber-950/40 px-5 py-3 rounded-2xl border border-amber-100 dark:border-amber-900/60 flex items-center gap-3">
+                    <div className="text-4xl font-extrabold text-amber-600 dark:text-amber-300">
+                      {avg}
+                    </div>
+                    <div className="text-left">
+                      <div className="text-[10px] font-extrabold text-amber-700/70 dark:text-amber-300/80 uppercase tracking-wider">
+                        Average Rating
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
+                        avg of {ratings.length}{' '}
+                        {ratings.length === 1 ? 'rating' : 'ratings'} · out of
+                        10
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <div className="text-[10px] font-extrabold text-amber-700/70 dark:text-amber-300/80 uppercase tracking-wider">
-                      Average Rating
-                    </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
-                      avg of {ratings.length}{' '}
-                      {ratings.length === 1 ? 'rating' : 'ratings'} · out of 10
-                    </div>
+
+                  <div>
+                    {Number(avg) >= 1 && Number(avg) < 5 ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-black bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 shadow-sm">
+                        🔴 Not Eligible
+                      </span>
+                    ) : Number(avg) >= 5 ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-black bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60 shadow-sm">
+                        🟢 Eligible
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               )}
@@ -541,7 +576,7 @@ export default function Ratings({
                       className="w-full"
                       searchable={true}
                     />
-                    {!isProjectView && activeDeptId && (
+                    {!isProjectView && (
                       <button
                         type="button"
                         onClick={() => setViewAll((current) => !current)}
