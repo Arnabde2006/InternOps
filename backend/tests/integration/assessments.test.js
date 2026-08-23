@@ -23,7 +23,9 @@ describe('Assessments Integration Tests', () => {
     );
 
     if (internRes.rowCount === 0 || captainRes.rowCount === 0) {
-      throw new Error('Assessment test users are missing. Run the assessment seed before tests.');
+      throw new Error(
+        'Assessment test users are missing. Run the assessment seed before tests.'
+      );
     }
 
     internId = internRes.rows[0].id;
@@ -46,12 +48,17 @@ describe('Assessments Integration Tests', () => {
 
     internToken = generateAccessToken({ id: internId, role: 'INTERN' });
     captainToken = generateAccessToken({ id: captainId, role: 'CAPTAIN' });
-    otherInternToken = generateAccessToken({ id: otherInternId, role: 'INTERN' });
+    otherInternToken = generateAccessToken({
+      id: otherInternId,
+      role: 'INTERN',
+    });
   });
 
   afterAll(async () => {
     if (otherInternId) {
-      await pool.query('DELETE FROM assessments WHERE user_id = $1', [otherInternId]);
+      await pool.query('DELETE FROM assessments WHERE user_id = $1', [
+        otherInternId,
+      ]);
       await pool.query('DELETE FROM users WHERE id = $1', [otherInternId]);
     }
     await app.close();

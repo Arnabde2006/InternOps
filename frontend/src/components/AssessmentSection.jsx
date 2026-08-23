@@ -3,13 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../lib/axios';
 import { QUERY_KEYS } from '../constants/queryKeys';
 import { Card, Spinner, ApiErrorState, Badge } from './ui';
-import {
-  Award,
-  TrendingUp,
-  CheckCircle,
-  Zap,
-  Target,
-} from 'lucide-react';
+import { Award, TrendingUp, CheckCircle, Zap, Target } from 'lucide-react';
 
 export default function AssessmentSection({ userId }) {
   const {
@@ -106,7 +100,8 @@ export default function AssessmentSection({ userId }) {
               AI Workforce Assessment
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Comprehensive evaluation of core engineering and workspace capabilities
+              Comprehensive evaluation of core engineering and workspace
+              capabilities
             </p>
           </div>
         </div>
@@ -125,7 +120,10 @@ export default function AssessmentSection({ userId }) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         <div className="lg:col-span-4 flex flex-col items-center justify-center p-6 rounded-3xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
           <div className="relative flex items-center justify-center w-32 h-32">
-            <svg className="w-full h-full transform -rotate-90" aria-label={`Assessment score ${scorePct}%`}>
+            <svg
+              className="w-full h-full transform -rotate-90"
+              aria-label={`Assessment score ${scorePct}%`}
+            >
               <circle
                 cx="64"
                 cy="64"
@@ -155,7 +153,9 @@ export default function AssessmentSection({ userId }) {
               </span>
             </div>
           </div>
-          <div className={`mt-4 px-4 py-1.5 rounded-full border text-sm font-extrabold shadow-sm ${scoreBgClass} ${scoreColorClass}`}>
+          <div
+            className={`mt-4 px-4 py-1.5 rounded-full border text-sm font-extrabold shadow-sm ${scoreBgClass} ${scoreColorClass}`}
+          >
             Category: {assessment.category}
           </div>
         </div>
@@ -204,7 +204,9 @@ export default function AssessmentSection({ userId }) {
           ) : (
             <div className="flex flex-wrap gap-2">
               {strengths.map((item, idx) => (
-                <Badge key={idx} color="green">{item}</Badge>
+                <Badge key={idx} color="green">
+                  {item}
+                </Badge>
               ))}
             </div>
           )}
@@ -216,11 +218,15 @@ export default function AssessmentSection({ userId }) {
             Areas of Improvement
           </h4>
           {improvements.length === 0 ? (
-            <p className="text-sm text-slate-500">No improvement areas logged yet.</p>
+            <p className="text-sm text-slate-500">
+              No improvement areas logged yet.
+            </p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {improvements.map((item, idx) => (
-                <Badge key={idx} color="yellow">{item}</Badge>
+                <Badge key={idx} color="yellow">
+                  {item}
+                </Badge>
               ))}
             </div>
           )}
@@ -235,7 +241,10 @@ export default function AssessmentSection({ userId }) {
           </h4>
           <div className="space-y-3">
             {nextActions.map((action, idx) => (
-              <div key={idx} className="flex items-start gap-3 p-3 rounded-2xl bg-indigo-50/30 dark:bg-indigo-950/10 border border-indigo-500/10">
+              <div
+                key={idx}
+                className="flex items-start gap-3 p-3 rounded-2xl bg-indigo-50/30 dark:bg-indigo-950/10 border border-indigo-500/10"
+              >
                 <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 shadow-sm">
                   {idx + 1}
                 </div>

@@ -6,7 +6,9 @@ const argon2 = require('argon2');
 async function seed() {
   const env = process.env.NODE_ENV || 'development';
   if (env === 'production' && process.env.ALLOW_SEED_IN_PRODUCTION !== 'true') {
-    throw new Error('Refusing to seed in production without ALLOW_SEED_IN_PRODUCTION=true.');
+    throw new Error(
+      'Refusing to seed in production without ALLOW_SEED_IN_PRODUCTION=true.'
+    );
   }
 
   const adminEmail = process.env.SEED_ADMIN_EMAIL;
