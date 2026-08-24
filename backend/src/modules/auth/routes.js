@@ -201,7 +201,7 @@ async function routes(fastify) {
       reply.setCookie('refreshToken', result.refreshToken, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? 'strict' : 'lax',
+        sameSite: isProduction ? 'none' : 'lax',
         path: '/api/v1/auth/refresh',
       });
 
@@ -209,7 +209,7 @@ async function routes(fastify) {
 
       req.auditOnResponse = {
         userId: result.user.id,
-        action: 'LOGIN',
+        action: 'LOGIN_SUCCESS',
         resourceType: 'auth',
         resourceId: result.user.id,
         ipAddress: req.ip,
@@ -224,7 +224,12 @@ async function routes(fastify) {
       reply.send(response);
 
       req.log.info(
-        { action: 'LOGIN', userId: result.user.id, ip: req.ip, userAgent },
+        {
+          action: 'LOGIN_SUCCESS',
+          userId: result.user.id,
+          ip: req.ip,
+          userAgent,
+        },
         'login success'
       );
     }
@@ -249,7 +254,7 @@ async function routes(fastify) {
       reply.setCookie('refreshToken', tokens.refreshToken, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? 'strict' : 'lax',
+        sameSite: isProduction ? 'none' : 'lax',
         path: '/api/v1/auth/refresh',
       });
 
@@ -374,7 +379,13 @@ async function routes(fastify) {
     },
     async (req, reply) => {
       const { email } = z.object({ email: z.string().email() }).parse(req.body);
-      await forgotPassword(email, audit.extractRequestInfo(req));
+      const auditLogData = await forgotPassword(
+        email,
+        audit.extractRequestInfo(req)
+      );
+      if (auditLogData) {
+        req.auditOnResponse = auditLogData;
+      }
       return { message: 'If that email exists, a reset link has been sent.' };
     }
   );
@@ -397,17 +408,26 @@ async function routes(fastify) {
         },
       },
       config: {
-        rateLimit: {
-          max: 5,
-          timeWindow: '1 minute',
-        },
+        rateLimit: isTestEnv
+          ? false
+          : {
+              max: 5,
+              timeWindow: '1 minute',
+            },
       },
     },
     async (req, reply) => {
       const { token, newPassword } = z
         .object({ token: z.string(), newPassword: z.string().min(8) })
         .parse(req.body);
-      await resetPassword(token, newPassword, audit.extractRequestInfo(req));
+      const auditLogData = await resetPassword(
+        token,
+        newPassword,
+        audit.extractRequestInfo(req)
+      );
+      if (auditLogData) {
+        req.auditOnResponse = auditLogData;
+      }
       return {
         message:
           'Password reset successful. Please log in with your new password.',

@@ -52,6 +52,9 @@ module.exports = async function routes(fastify, opts) {
   fastify.register(require('./modules/social-tasks/routes'), {
     prefix: '/tasks',
   });
+  fastify.register(require('./modules/onboarding/routes'), {
+    prefix: '/onboarding',
+  });
   fastify.register(require('./modules/proof-submissions/routes'), {
     prefix: '/proofs',
   });
@@ -78,6 +81,7 @@ module.exports = async function routes(fastify, opts) {
     prefix: '/reports/export',
   });
   fastify.register(require('./modules/ai/routes'), { prefix: '/ai' });
+
   fastify.register(require('./modules/uptoskills/routes'), {
     prefix: '/uptoskills',
   });
@@ -91,6 +95,10 @@ module.exports = async function routes(fastify, opts) {
   });
   fastify.register(require('./modules/feature-flags/routes'), {
     prefix: '/feature-flags',
+  });
+
+  fastify.register(require('./modules/github-sync/index'), {
+    prefix: '/github',
   });
 
   // Public certificate verification (no auth)
